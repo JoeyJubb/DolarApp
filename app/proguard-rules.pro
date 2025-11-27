@@ -1,7 +1,7 @@
 -dontoptimize
 
 # Some methods are only called from tests, so make sure the shrinker keeps them.
--keep class com.example.android.architecture.blueprints.** { *; }
+-keep class com.joe.** { *; }
 
 -keep class androidx.drawerlayout.widget.DrawerLayout { *; }
 -keep class androidx.test.espresso.**
@@ -9,9 +9,7 @@
 -keep class androidx.test.espresso.IdlingRegistry { *; }
 -keep class androidx.test.espresso.IdlingResource { *; }
 
--keep class com.google.common.base.Preconditions { *; }
-
--keep class androidx.room.RoomDataBase { *; }
+-keep class androidx.room.Database { *; }
 -keep class androidx.room.Room { *; }
 -keep class android.arch.** { *; }
 
