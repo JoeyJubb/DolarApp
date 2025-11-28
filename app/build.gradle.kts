@@ -178,6 +178,7 @@ dependencies {
   testImplementation(libs.androidx.test.core.ktx)
   testImplementation(libs.androidx.test.ext)
   testImplementation(libs.androidx.test.rules)
+  testImplementation(project(":shared-test"))
 
   // AndroidX Test - Instrumented testing
   androidTestImplementation(libs.androidx.test.core.ktx)
@@ -191,6 +192,7 @@ dependencies {
   androidTestImplementation(libs.androidx.test.espresso.intents)
   androidTestImplementation(libs.androidx.test.espresso.idling.resources)
   androidTestImplementation(libs.androidx.test.espresso.idling.concurrent)
+  androidTestImplementation(project(":shared-test"))
 
   // AndroidX Test - Hilt testing
   androidTestImplementation(libs.hilt.android.testing)

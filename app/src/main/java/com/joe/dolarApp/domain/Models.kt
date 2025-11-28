@@ -15,10 +15,8 @@ data class ExchangeRate(
 /**
  * Conversion rate is stored as in [Long] with a precision of ten decimal places
  *
- * @param displayString value to display to the user
  * @param tenDecimalPlaces conversion rate multiplied by 10 billion (10,000,000,000)
  */
 data class Conversion(
-  val displayString: String,
   val tenDecimalPlaces: Long,
 )

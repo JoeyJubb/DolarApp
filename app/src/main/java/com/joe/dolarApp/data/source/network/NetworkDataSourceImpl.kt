@@ -18,14 +18,20 @@ package com.joe.dolarApp.data.source.network
 
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.domain.ExchangeRate
+import com.joe.dolarApp.util.errorHandling.Result.Basic.UnexpectedFailure
+import com.joe.dolarApp.util.errorHandling.Result
+import com.joe.dolarApp.util.errorHandling.NetworkError
 import dagger.Reusable
 import javax.inject.Inject
-import kotlin.Result.Companion.failure
 
 @Reusable
 class NetworkDataSourceImpl @Inject constructor() : NetworkDataSource {
 
-  override suspend fun getExchangeRate(currencyCode: CurrencyCode): Result<ExchangeRate> = failure(NotImplementedError())
+  override suspend fun getExchangeRate(
+    currencyCode: CurrencyCode
+  ): Result<ExchangeRate, NetworkError> = UnexpectedFailure(NotImplementedError())
 
-  override suspend fun getCurrencyCodes(): Result<List<CurrencyCode>> = failure(NotImplementedError())
+  override suspend fun getCurrencyCodes(
+
+  ): Result<List<CurrencyCode>, NetworkError> = UnexpectedFailure(NotImplementedError())
 }

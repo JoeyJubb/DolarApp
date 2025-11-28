@@ -18,7 +18,9 @@ package com.joe.dolarApp.domain
 
 import dagger.Reusable
 import javax.inject.Inject
-import kotlin.Result.Companion.failure
+import com.joe.dolarApp.util.errorHandling.Result
+import com.joe.dolarApp.util.errorHandling.Result.Basic.UnexpectedFailure
+import com.joe.dolarApp.util.errorHandling.NetworkError
 
 @Reusable
 class ConversionRepositoryImpl @Inject constructor(
@@ -27,8 +29,10 @@ class ConversionRepositoryImpl @Inject constructor(
   override suspend fun getExchangeRate(
     currency: CurrencyCode,
     forceRefresh: Boolean
-  ): Result<ExchangeRate> = failure(NotImplementedError())
+  ): Result<ExchangeRate, NetworkError> = UnexpectedFailure(NotImplementedError())
 
 
-  override suspend fun getAvailableCurrencies(forceRefresh: Boolean): Result<List<CurrencyCode>> = failure(NotImplementedError())
+
+  override suspend fun getAvailableCurrencies(forceRefresh: Boolean): Result<List<CurrencyCode>, NetworkError> = UnexpectedFailure(NotImplementedError())
+
 }
