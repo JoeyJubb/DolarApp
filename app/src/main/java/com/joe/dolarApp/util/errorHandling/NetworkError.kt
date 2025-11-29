@@ -19,7 +19,7 @@ sealed interface NetworkError {
    * The network responded with a failure.
    */
   data class NetworkFailure(
-    val retryStrategy: RetryStrategy,
+    val retryStrategy: RetryStrategy = RetryStrategy.Immediate,
     val debugMessage: String,
   ) : NetworkError {
 
@@ -28,6 +28,5 @@ sealed interface NetworkError {
       data object Immediate : RetryStrategy
       data class AfterDelay(val delay: Duration) : RetryStrategy
     }
-
   }
 }

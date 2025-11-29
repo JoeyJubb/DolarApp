@@ -24,7 +24,7 @@ import com.joe.dolarApp.data.source.local.ExchangeRateDao
 import com.joe.dolarApp.data.source.local.ExchangeRateDatabase
 import com.joe.dolarApp.data.source.local.LocalDataStore
 import com.joe.dolarApp.data.source.network.NetworkDataSource
-import com.joe.dolarApp.data.source.network.NetworkDataSourceImpl
+import com.joe.dolarApp.data.source.network.FakeNetworkDataSource
 import com.joe.dolarApp.domain.ConversionRepository
 import com.joe.dolarApp.domain.ConversionRepositoryImpl
 import dagger.Binds
@@ -50,7 +50,7 @@ interface DataSourceModule {
 
   @Singleton
   @Binds
-  fun bindNetworkDataSource(impl: NetworkDataSourceImpl): NetworkDataSource
+  fun bindNetworkDataSource(impl: FakeNetworkDataSource): NetworkDataSource
 
   @Singleton
   @Binds
