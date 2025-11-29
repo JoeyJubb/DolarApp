@@ -16,13 +16,15 @@
 
 package com.joe.dolarApp.util
 
+import com.joe.dolarApp.util.errorHandling.Result
+
 /**
  * A generic class that holds a loading signal or the result of an async operation.
  */
-sealed class LoadState<out T, out V> {
-    object Loading : LoadState<Nothing, Nothing>()
+sealed interface LoadState<out T, out V> {
+    object Loading : LoadState<Nothing, Nothing>
 
-    data class Error<out V>(val error: V) : LoadState<Nothing, V>()
-
-    data class Success<out T>(val data: T) : LoadState<T, Nothing>()
+  data class Idle<out T, out V>(
+    val result: Result<T, V>,
+  ) : LoadState<T, V>
 }

@@ -7,18 +7,18 @@ sealed interface NetworkError{
   data object Disconnected : NetworkError
 
   /**
-   * Network responded with a success, but this app could not understand the response.
+   * Network responded with a success, but this app could not parse the response correctly
    *
    * Not usually able to recover from this
    */
-  data class UnexpectedResponse(
+  data class ClientFailure(
     val cause: Throwable
   ): NetworkError
 
   /**
    * The network responded with a failure.
    */
-  data class BadResponse(
+  data class NetworkFailure(
     val retryStrategy: RetryStrategy,
     val debugMessage: String,
   ) : NetworkError{

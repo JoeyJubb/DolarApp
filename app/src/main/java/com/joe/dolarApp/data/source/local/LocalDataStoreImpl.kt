@@ -3,37 +3,33 @@ package com.joe.dolarApp.data.source.local
 import com.joe.dolarApp.domain.Conversion
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.domain.ExchangeRate
-import com.joe.dolarApp.util.errorHandling.coRunCatching
+import com.joe.dolarApp.util.errorHandling.Optional
+import com.joe.dolarApp.util.errorHandling.Result
+import com.joe.dolarApp.util.errorHandling.asResult
+import com.joe.dolarApp.util.errorHandling.asSuccess
 import dagger.Reusable
 import jakarta.inject.Inject
-import com.joe.dolarApp.util.errorHandling.Result
-import com.joe.dolarApp.util.errorHandling.asSuccess
-import com.joe.dolarApp.util.errorHandling.flatMap
 
 @Reusable
 class LocalDataStoreImpl @Inject constructor(
   private val exchangeRateDao: ExchangeRateDao,
-): LocalDataStore {
+) : LocalDataStore {
 
-  override suspend fun upsert(exchangeRate: ExchangeRate): Result.Basic<Unit> = coRunCatching {
-    exchangeRateDao.upsert(toDataModel(exchangeRate))
-  }
+  override suspend fun upsert(exchangeRate: ExchangeRate): Result<Unit, Unit> = exchangeRateDao
+    .upsert(toDataModel(exchangeRate))
+    .asSuccess()
 
-  private fun toDataModel(domain: ExchangeRate) =  LocalExchangeRate(
+  private fun toDataModel(domain: ExchangeRate) = LocalExchangeRate(
     currencyCode = domain.currencyCode.value,
     askTenDecimals = domain.ask.tenDecimalPlaces,
     bidTenDecimals = domain.bid.tenDecimalPlaces,
     timeStamp = domain.timeStamp,
   )
 
-  override suspend fun get(currency: CurrencyCode): Result<ExchangeRate, LocalDataStore.NotFoundFailure> = coRunCatching {
+  override suspend fun get(currency: CurrencyCode): Optional<ExchangeRate> =
     exchangeRateDao.getByCurrencyCode(currency.value)
-  }.flatMap{ localExchangeRate ->
-    localExchangeRate
       ?.let(::toDomainModel)
-      ?.asSuccess()
-      ?: Result.ExpectedFailure(LocalDataStore.NotFoundFailure)
-  }
+      .asResult()
 
   private fun toDomainModel(local: LocalExchangeRate) = ExchangeRate(
     currencyCode = CurrencyCode(local.currencyCode),

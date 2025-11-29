@@ -1,13 +1,11 @@
 package com.joe.dolarApp.data.source.local
 
 import CoroutineTestRule
-import com.joe.dolarApp.TestException
 import com.joe.dolarApp.domain.Conversion
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.domain.ExchangeRate
-import com.joe.dolarApp.isExpectedFailure
+import com.joe.dolarApp.isFailure
 import com.joe.dolarApp.isSuccess
-import com.joe.dolarApp.isUnexpectedFailure
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.mockk
@@ -58,28 +56,6 @@ class LocalDataStoreImplTest {
   }
 
   @Test
-  fun `upsert failure path - dao thows`() = testRule.runTest {
-    // given
-    coEvery { exchangeRateDao.upsert(any()) } throws TestException
-
-    // when
-    val result = sut.upsert(
-      ExchangeRate(
-        currencyCode = CurrencyCode(value = CURRENCY_CODE),
-        ask = Conversion(123L),
-        bid = Conversion(456L),
-        timeStamp = mockk(),
-      )
-    )
-
-    // then
-    expectThat(result)
-      .isUnexpectedFailure()
-      .isSameInstanceAs(TestException)
-  }
-
-
-  @Test
   fun `get happy path`() = testRule.runTest {
     // given
     val timeStamp = mockk<LocalDateTime>()
@@ -113,22 +89,7 @@ class LocalDataStoreImplTest {
 
     // then
     expectThat(result)
-      .isExpectedFailure()
-      .isEqualTo(LocalDataStore.NotFoundFailure)
-  }
-
-  @Test
-  fun `get failure path - dao throws`() = testRule.runTest {
-    // given
-    coEvery { exchangeRateDao.getByCurrencyCode(any()) } throws TestException
-
-    // when
-    val result = sut.get(CurrencyCode(CURRENCY_CODE))
-
-    // then
-    expectThat(result)
-      .isUnexpectedFailure()
-      .isSameInstanceAs(TestException)
+      .isFailure()
   }
 
   private companion object {

@@ -1,25 +1,7 @@
 package com.joe.dolarApp.util.errorHandling
 
-import kotlin.coroutines.cancellation.CancellationException
+fun <T> T.asSuccess(): Result.Success<T> = Result.Success(this)
 
-suspend inline fun <T> coRunCatching(
-  noinline block: suspend () -> T
-): Result.Basic<T> {
-  return try {
-    block().asSuccess()
-  } catch (e: Throwable) {
-    if (e is CancellationException) {
-      throw e
-    }
-    Result.Basic.UnexpectedFailure(e)
-  }
-}
+fun <E> E.asFailure() : Result.Failure<E> = Result.Failure(this)
 
-fun <T> T.asSuccess(): Result.Basic.Success<T> = Result.Basic.Success(this)
-
-inline infix fun <T, U, E> Result.Basic<T>.flatMap(transform: (T) -> Result<U, E>) : Result<U, E>{
-  return when (this){
-    is Result.Basic.Success -> transform(value)
-    is Result.Basic.UnexpectedFailure -> this
-  }
-}
+fun <T> T?.asResult() : Optional<T> = this?.asSuccess() ?: Result.Failure(Unit)
