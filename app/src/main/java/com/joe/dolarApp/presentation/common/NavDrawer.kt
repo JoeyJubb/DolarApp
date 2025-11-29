@@ -119,7 +119,7 @@ private fun DrawerHeader(
       .height(dimensionResource(id = R.dimen.header_height))
       .padding(dimensionResource(id = R.dimen.header_padding))
   ) {
-    
+
 
     Image(
       painter = painterResource(id = R.drawable.logo_no_fill),

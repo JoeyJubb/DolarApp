@@ -26,13 +26,13 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class DolarAppActivity : ComponentActivity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-          TodoTheme {
-            TodoNavGraph()
-          }
-        }
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    enableEdgeToEdge()
+    setContent {
+      TodoTheme {
+        TodoNavGraph()
+      }
     }
+  }
 }

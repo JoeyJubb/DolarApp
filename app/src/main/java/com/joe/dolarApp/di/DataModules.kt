@@ -39,9 +39,9 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 interface RepositoryModule {
 
-    @Singleton
-    @Binds
-    fun bindConversionRepository(impl: ConversionRepositoryImpl): ConversionRepository
+  @Singleton
+  @Binds
+  fun bindConversionRepository(impl: ConversionRepositoryImpl): ConversionRepository
 }
 
 @Module
@@ -61,17 +61,17 @@ interface DataSourceModule {
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
-    @Singleton
-    @Provides
-    fun provideDataBase(@ApplicationContext context: Context): ExchangeRateDatabase {
-        return Room.databaseBuilder(
-            context.applicationContext,
-            ExchangeRateDatabase::class.java,
-            "CurrencyConversions.db"
-        )
-          .build()
-    }
+  @Singleton
+  @Provides
+  fun provideDataBase(@ApplicationContext context: Context): ExchangeRateDatabase {
+    return Room.databaseBuilder(
+      context.applicationContext,
+      ExchangeRateDatabase::class.java,
+      "CurrencyConversions.db"
+    )
+      .build()
+  }
 
-    @Provides
-    fun provideTaskDao(database: ExchangeRateDatabase): ExchangeRateDao = database.exchangeRateDao()
+  @Provides
+  fun provideTaskDao(database: ExchangeRateDatabase): ExchangeRateDao = database.exchangeRateDao()
 }

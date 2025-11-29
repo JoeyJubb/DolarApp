@@ -2,7 +2,7 @@ package com.joe.dolarApp.util.errorHandling
 
 import kotlin.time.Duration
 
-sealed interface NetworkError{
+sealed interface NetworkError {
 
   data object Disconnected : NetworkError
 
@@ -13,7 +13,7 @@ sealed interface NetworkError{
    */
   data class ClientFailure(
     val cause: Throwable
-  ): NetworkError
+  ) : NetworkError
 
   /**
    * The network responded with a failure.
@@ -21,11 +21,11 @@ sealed interface NetworkError{
   data class NetworkFailure(
     val retryStrategy: RetryStrategy,
     val debugMessage: String,
-  ) : NetworkError{
+  ) : NetworkError {
 
-    sealed interface RetryStrategy{
+    sealed interface RetryStrategy {
       data object None : RetryStrategy
-      data object Immediate: RetryStrategy
+      data object Immediate : RetryStrategy
       data class AfterDelay(val delay: Duration) : RetryStrategy
     }
 

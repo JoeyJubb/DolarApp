@@ -25,7 +25,7 @@ import kotlinx.datetime.LocalDateTime
  * the data layer only.
  */
 @Entity(
-    tableName = "exchange_rates"
+  tableName = "exchange_rates"
 )
 data class LocalExchangeRate(
   @PrimaryKey val currencyCode: String,

@@ -41,18 +41,18 @@ fun AboutScreen(
   viewModel: AboutViewModel = hiltViewModel(),
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = { AboutTopAppBar(openDrawer) },
-    ) { paddingValues ->
-        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+  Scaffold(
+    modifier = modifier.fillMaxSize(),
+    snackbarHost = { SnackbarHost(snackbarHostState) },
+    topBar = { AboutTopAppBar(openDrawer) },
+  ) { paddingValues ->
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        AboutContent(
-          uiState = uiState,
-            modifier = modifier.padding(paddingValues)
-        )
-    }
+    AboutContent(
+      uiState = uiState,
+      modifier = modifier.padding(paddingValues)
+    )
+  }
 }
 
 @Composable

@@ -29,5 +29,5 @@ import androidx.room.TypeConverters
 @Database(entities = [LocalExchangeRate::class], version = 1, exportSchema = false)
 abstract class ExchangeRateDatabase : RoomDatabase() {
 
-    abstract fun exchangeRateDao(): ExchangeRateDao
+  abstract fun exchangeRateDao(): ExchangeRateDao
 }

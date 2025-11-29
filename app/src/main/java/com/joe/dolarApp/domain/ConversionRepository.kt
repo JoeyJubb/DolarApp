@@ -1,7 +1,7 @@
 package com.joe.dolarApp.domain
 
-import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.NetworkError
+import com.joe.dolarApp.util.errorHandling.Result
 
 interface ConversionRepository {
 

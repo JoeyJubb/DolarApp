@@ -35,48 +35,48 @@ import com.joe.dolarApp.R
 
 @Composable
 fun CalculatorTopBar(
-    openDrawer: () -> Unit,
+  openDrawer: () -> Unit,
 ) {
-    TopAppBar(
-        title = { Text(text = stringResource(id = R.string.title_conversion_calculator)) },
-        navigationIcon = {
-            IconButton(onClick = openDrawer) {
-                Icon(Icons.Filled.Menu, stringResource(id = R.string.title_conversion_calculator))
-            }
-        },
-        modifier = Modifier.fillMaxWidth()
-    )
+  TopAppBar(
+    title = { Text(text = stringResource(id = R.string.title_conversion_calculator)) },
+    navigationIcon = {
+      IconButton(onClick = openDrawer) {
+        Icon(Icons.Filled.Menu, stringResource(id = R.string.title_conversion_calculator))
+      }
+    },
+    modifier = Modifier.fillMaxWidth()
+  )
 }
 
 @Composable
 fun AboutTopAppBar(openDrawer: () -> Unit) {
-    TopAppBar(
-        title = { Text(text = stringResource(id = R.string.title_about)) },
-        navigationIcon = {
-            IconButton(onClick = openDrawer) {
-                Icon(Icons.Filled.Menu, stringResource(id = R.string.title_conversion_calculator))
-            }
-        },
-        modifier = Modifier.fillMaxWidth()
-    )
+  TopAppBar(
+    title = { Text(text = stringResource(id = R.string.title_about)) },
+    navigationIcon = {
+      IconButton(onClick = openDrawer) {
+        Icon(Icons.Filled.Menu, stringResource(id = R.string.title_conversion_calculator))
+      }
+    },
+    modifier = Modifier.fillMaxWidth()
+  )
 }
 
 @Preview
 @Composable
 private fun CalculatorTopBarPreview() {
-    TodoTheme {
-        Surface {
-            CalculatorTopBar {}
-        }
+  TodoTheme {
+    Surface {
+      CalculatorTopBar {}
     }
+  }
 }
 
 @Preview
 @Composable
 private fun AboutTopAppBarPreview() {
-    TodoTheme {
-        Surface {
-            AboutTopAppBar { }
-        }
+  TodoTheme {
+    Surface {
+      AboutTopAppBar { }
     }
+  }
 }

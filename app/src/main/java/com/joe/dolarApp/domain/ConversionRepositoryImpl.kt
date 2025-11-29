@@ -16,10 +16,10 @@
 
 package com.joe.dolarApp.domain
 
+import com.joe.dolarApp.util.errorHandling.NetworkError
+import com.joe.dolarApp.util.errorHandling.Result
 import dagger.Reusable
 import javax.inject.Inject
-import com.joe.dolarApp.util.errorHandling.Result
-import com.joe.dolarApp.util.errorHandling.NetworkError
 
 @Reusable
 class ConversionRepositoryImpl @Inject constructor(
@@ -31,7 +31,7 @@ class ConversionRepositoryImpl @Inject constructor(
   ): Result<ExchangeRate, NetworkError> = TODO()
 
 
-
-  override suspend fun getAvailableCurrencies(forceRefresh: Boolean): Result<List<CurrencyCode>, NetworkError> = TODO()
+  override suspend fun getAvailableCurrencies(forceRefresh: Boolean): Result<List<CurrencyCode>, NetworkError> =
+    TODO()
 
 }

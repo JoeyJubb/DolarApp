@@ -28,8 +28,8 @@ import timber.log.Timber.DebugTree
 @HiltAndroidApp
 class DolarAppApplication : Application() {
 
-    override fun onCreate() {
-        super.onCreate()
-        if (BuildConfig.DEBUG) Timber.plant(DebugTree())
-    }
+  override fun onCreate() {
+    super.onCreate()
+    if (BuildConfig.DEBUG) Timber.plant(DebugTree())
+  }
 }

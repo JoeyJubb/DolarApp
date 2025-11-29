@@ -22,7 +22,7 @@ import com.joe.dolarApp.util.errorHandling.Result
  * A generic class that holds a loading signal or the result of an async operation.
  */
 sealed interface LoadState<out T, out V> {
-    object Loading : LoadState<Nothing, Nothing>
+  object Loading : LoadState<Nothing, Nothing>
 
   data class Idle<out T, out V>(
     val result: Result<T, V>,
