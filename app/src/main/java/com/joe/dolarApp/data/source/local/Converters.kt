@@ -1,14 +1,14 @@
 package com.joe.dolarApp.data.source.local
 
 import androidx.room.TypeConverter
-import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.Instant
 
 
 class Converters {
 
   @TypeConverter
-  fun toDate(string: String?): LocalDateTime? = string?.let(LocalDateTime::parse)
+  fun toInstant(string: String?): Instant? = string?.let(Instant::parse)
 
   @TypeConverter
-  fun toString(date: LocalDateTime?): String? = date?.toString()
+  fun toString(date: Instant?): String? = date?.toString()
 }

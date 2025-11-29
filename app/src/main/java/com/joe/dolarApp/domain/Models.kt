@@ -1,6 +1,6 @@
 package com.joe.dolarApp.domain
 
-import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.Instant
 
 @JvmInline
 value class CurrencyCode(val value: String)
@@ -9,7 +9,7 @@ data class ExchangeRate(
   val currencyCode: CurrencyCode,
   val ask: Conversion,
   val bid: Conversion,
-  val timeStamp: LocalDateTime
+  val timeStamp: Instant
 )
 
 /**

@@ -18,7 +18,7 @@ package com.joe.dolarApp.data.source.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.Instant
 
 /**
  * Internal model used to represent a task stored locally in a Room database. This is used inside
@@ -31,5 +31,5 @@ data class LocalExchangeRate(
   @PrimaryKey val currencyCode: String,
   val askTenDecimals: Long,
   val bidTenDecimals: Long,
-  val timeStamp: LocalDateTime,
+  val timeStamp: Instant,
 )

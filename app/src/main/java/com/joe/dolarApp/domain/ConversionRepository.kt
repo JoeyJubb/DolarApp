@@ -5,12 +5,15 @@ import com.joe.dolarApp.util.errorHandling.Result
 
 interface ConversionRepository {
 
+  /**
+   * Attempts to get an [ExchangeRate] for the given [CurrencyCode]
+   *
+   * @param forceRefresh when true, ignore any local cache
+   */
   suspend fun getExchangeRate(
-    currency: CurrencyCode,
+    currencyCode: CurrencyCode,
     forceRefresh: Boolean = false,
   ): Result<ExchangeRate, NetworkError>
 
-  suspend fun getAvailableCurrencies(
-    forceRefresh: Boolean = false,
-  ): Result<List<CurrencyCode>, NetworkError>
+  suspend fun getAvailableCurrencies(): Result<List<CurrencyCode>, NetworkError>
 }

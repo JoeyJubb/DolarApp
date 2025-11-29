@@ -10,6 +10,7 @@ import com.joe.dolarApp.util.errorHandling.asResult
 import com.joe.dolarApp.util.errorHandling.asSuccess
 import com.joe.dolarApp.util.errorHandling.mapError
 import dagger.Reusable
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import javax.inject.Inject
 
@@ -46,25 +47,25 @@ class FakeNetworkDataSource @Inject constructor(
       currencyCode = CurrencyCode("MXN"),
       ask = Conversion(183119000000L),
       bid = Conversion(182819000000L),
-      timeStamp = LocalDateTime.parse("2025-11-29T13:46:21.477342420")
+      timeStamp = Instant.parse("2025-11-29T13:46:21.477342420")
     ),
     ExchangeRate(
       currencyCode = CurrencyCode("ARS"),
       ask = Conversion(15115100000000L),
       bid = Conversion(14865543000000L),
-      timeStamp = LocalDateTime.parse("2025-11-29T13:46:21.486365910")
+      timeStamp = Instant.parse("2025-11-29T13:46:21.486365910")
     ),
     ExchangeRate(
       currencyCode = CurrencyCode("BRL"),
       ask = Conversion(53822775000L),
       bid = Conversion(53256380000L),
-      timeStamp = LocalDateTime.parse("2025-11-29T13:46:21.494420614")
+      timeStamp = Instant.parse("2025-11-29T13:46:21.494420614")
     ),
     ExchangeRate(
       currencyCode = CurrencyCode("COP"),
       ask = Conversion(37876313000000L),
       bid = Conversion(37466300000000L),
-      timeStamp = LocalDateTime.parse("2025-11-29T13:46:21.502238239")
+      timeStamp = Instant.parse("2025-11-29T13:46:21.502238239")
     ),
   )
 ) : NetworkDataSource {

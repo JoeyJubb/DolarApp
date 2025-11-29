@@ -1,22 +1,75 @@
 
 package com.joe.dolarApp.domain
 
+import com.joe.dolarApp.data.source.local.LocalDataStore
+import com.joe.dolarApp.data.source.network.NetworkDataSource
 import com.joe.dolarApp.util.errorHandling.NetworkError
 import com.joe.dolarApp.util.errorHandling.Result
+import com.joe.dolarApp.util.errorHandling.Result.Failure
+import com.joe.dolarApp.util.errorHandling.asSuccess
+import com.joe.dolarApp.util.errorHandling.getOrNull
+import com.joe.dolarApp.util.errorHandling.onSuccess
 import dagger.Reusable
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.days
 
 @Reusable
 class ConversionRepositoryImpl @Inject constructor(
+  private val clock: Clock,
+  private val local: LocalDataStore,
+  private val network: NetworkDataSource,
 ) : ConversionRepository {
 
   override suspend fun getExchangeRate(
-    currency: CurrencyCode,
+    currencyCode: CurrencyCode,
     forceRefresh: Boolean
-  ): Result<ExchangeRate, NetworkError> = TODO()
+  ): Result<ExchangeRate, NetworkError> = if(forceRefresh){
+    fromNetwork(currencyCode)
+  }else{
+    /* Check the cache first */
+    val local = local.get(currencyCode).getOrNull()
+
+    if(local == null || local.timeStamp.isTooOld()){
+      /* Cache miss or the cached value is too old */
+      when (val network = fromNetwork(currencyCode)) {
+        /* network failed! attempt to use the cached value even if it's too old */
+        is Failure -> local?.asSuccess() ?: network
+        /* network success -- use the up to date value */
+        is Result.Success -> network
+      }
+    }else{
+      local.asSuccess()
+    }
+  }
 
 
-  override suspend fun getAvailableCurrencies(forceRefresh: Boolean): Result<List<CurrencyCode>, NetworkError> =
-    TODO()
+  private suspend fun fromNetwork(currencyCode: CurrencyCode): Result<ExchangeRate, NetworkError> =
+    network.getExchangeRate(currencyCode)
+      .onSuccess { exchangeRate ->
+        local.upsert(exchangeRate)
+      }
 
+  private fun Instant.isTooOld(): Boolean = clock.now() - this >= maximumCacheAge
+
+  /*
+   * Is this feature envy? It looks like it might be, but it's okay for now. We don't want
+   * ViewModels depending on data sources directly. ViewModels should depend on repositories or
+   * usecases.
+   *
+   * Perhaps we'll want to add some local caching here later? Much easier to do if all the
+   * ViewModels that need this info are pointed at this repository!
+   */
+  override suspend fun getAvailableCurrencies(): Result<List<CurrencyCode>, NetworkError> =
+    network.getCurrencyCodes()
+
+
+  private companion object{
+
+    /**
+     * If the local entry is at least this old, automatically try the network.
+     */
+    private val maximumCacheAge = 1.days
+  }
 }

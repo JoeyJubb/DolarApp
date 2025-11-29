@@ -10,7 +10,7 @@ import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.mockk
 import io.mockk.slot
-import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.Instant
 import org.junit.Rule
 import org.junit.Test
 import strikt.api.expectThat
@@ -33,7 +33,7 @@ class LocalDataStoreImplTest {
     // given
     val captureSlot = slot<LocalExchangeRate>()
     coJustRun { exchangeRateDao.upsert(capture(captureSlot)) }
-    val timeStamp = mockk<LocalDateTime>()
+    val timeStamp = mockk<Instant>()
 
     // when
     val result = sut.upsert(
@@ -58,7 +58,7 @@ class LocalDataStoreImplTest {
   @Test
   fun `get happy path`() = testRule.runTest {
     // given
-    val timeStamp = mockk<LocalDateTime>()
+    val timeStamp = mockk<Instant>()
     coEvery { exchangeRateDao.getByCurrencyCode(CURRENCY_CODE) } returns LocalExchangeRate(
       currencyCode = CURRENCY_CODE,
       askTenDecimals = 123L,

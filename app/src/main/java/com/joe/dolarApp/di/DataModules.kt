@@ -19,6 +19,7 @@
 package com.joe.dolarApp.di
 
 import android.content.Context
+import android.os.SystemClock
 import androidx.room.Room
 import com.joe.dolarApp.data.source.local.ExchangeRateDao
 import com.joe.dolarApp.data.source.local.ExchangeRateDatabase
@@ -33,7 +34,17 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.datetime.Clock
 import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+interface AppModule {
+
+  @Singleton
+  @Binds
+  fun bindClock(impl: Clock.System): Clock
+}
 
 @Module
 @InstallIn(SingletonComponent::class)
