@@ -1,7 +1,6 @@
 package com.joe.dolarApp.data.source.local
 
 import CoroutineTestRule
-import com.joe.dolarApp.domain.Conversion
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.domain.ExchangeRate
 import com.joe.dolarApp.isFailure
@@ -39,8 +38,8 @@ class LocalDataStoreImplTest {
     val result = sut.upsert(
       ExchangeRate(
         currencyCode = CurrencyCode(CURRENCY_CODE),
-        ask = Conversion(123L),
-        bid = Conversion(456L),
+        ask = "ask",
+        bid = "bid",
         timeStamp = timeStamp,
       )
     )
@@ -49,8 +48,8 @@ class LocalDataStoreImplTest {
     expectThat(result).isSuccess()
     expectThat(captureSlot.captured) {
       get { currencyCode } isEqualTo CURRENCY_CODE
-      get { askTenDecimals } isEqualTo 123L
-      get { bidTenDecimals } isEqualTo 456L
+      get { ask } isEqualTo "ask"
+      get { bid } isEqualTo "bid"
       get { this.timeStamp } isSameInstanceAs timeStamp
     }
   }
@@ -61,8 +60,8 @@ class LocalDataStoreImplTest {
     val timeStamp = mockk<Instant>()
     coEvery { exchangeRateDao.getByCurrencyCode(CURRENCY_CODE) } returns LocalExchangeRate(
       currencyCode = CURRENCY_CODE,
-      askTenDecimals = 123L,
-      bidTenDecimals = 456L,
+      ask = "ask",
+      bid = "bid",
       timeStamp = timeStamp,
     )
 
@@ -73,8 +72,8 @@ class LocalDataStoreImplTest {
     expectThat(result).isSuccess()
       .and {
         get { currencyCode }.get { value } isEqualTo CURRENCY_CODE
-        get { ask }.get { tenDecimalPlaces } isEqualTo 123L
-        get { bid }.get { tenDecimalPlaces } isEqualTo 456L
+        get { ask } isEqualTo "ask"
+        get { bid } isEqualTo "bid"
         get { this.timeStamp } isSameInstanceAs timeStamp
       }
   }

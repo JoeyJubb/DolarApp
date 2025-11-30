@@ -1,6 +1,5 @@
 package com.joe.dolarApp.data.source.local
 
-import com.joe.dolarApp.domain.Conversion
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.domain.ExchangeRate
 import com.joe.dolarApp.util.errorHandling.Optional
@@ -21,8 +20,8 @@ class LocalDataStoreImpl @Inject constructor(
 
   private fun toDataModel(domain: ExchangeRate) = LocalExchangeRate(
     currencyCode = domain.currencyCode.value,
-    askTenDecimals = domain.ask.tenDecimalPlaces,
-    bidTenDecimals = domain.bid.tenDecimalPlaces,
+    ask = domain.ask,
+    bid = domain.bid,
     timeStamp = domain.timeStamp,
   )
 
@@ -33,8 +32,8 @@ class LocalDataStoreImpl @Inject constructor(
 
   private fun toDomainModel(local: LocalExchangeRate) = ExchangeRate(
     currencyCode = CurrencyCode(local.currencyCode),
-    ask = Conversion(local.askTenDecimals),
-    bid = Conversion(local.bidTenDecimals),
+    ask = local.ask,
+    bid = local.bid,
     timeStamp = local.timeStamp
   )
 

@@ -29,7 +29,7 @@ import kotlinx.datetime.Instant
 )
 data class LocalExchangeRate(
   @PrimaryKey val currencyCode: String,
-  val askTenDecimals: Long,
-  val bidTenDecimals: Long,
+  val ask: String,
+  val bid: String,
   val timeStamp: Instant,
 )
