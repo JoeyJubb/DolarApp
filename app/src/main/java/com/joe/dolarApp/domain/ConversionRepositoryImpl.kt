@@ -23,17 +23,18 @@ class ConversionRepositoryImpl @Inject constructor(
 ) : ConversionRepository {
 
   override suspend fun getExchangeRate(
-    currencyCode: CurrencyCode,
+    domestic: CurrencyCode,
+    foreign: CurrencyCode,
     forceRefresh: Boolean
   ): Result<ExchangeRate, NetworkError> = if(forceRefresh){
-    fromNetwork(currencyCode)
+    fromNetwork(domestic, foreign)
   }else{
     /* Check the cache first */
-    val local = local.get(currencyCode).getOrNull()
+    val local = local.get(domestic, foreign).getOrNull()
 
     if(local == null || local.timeStamp.isTooOld()){
       /* Cache miss or the cached value is too old */
-      when (val network = fromNetwork(currencyCode)) {
+      when (val network = fromNetwork(domestic, foreign)) {
         /* network failed! attempt to use the cached value even if it's too old */
         is Failure -> local?.asSuccess() ?: network
         /* network success -- use the up to date value */
@@ -45,8 +46,8 @@ class ConversionRepositoryImpl @Inject constructor(
   }
 
 
-  private suspend fun fromNetwork(currencyCode: CurrencyCode): Result<ExchangeRate, NetworkError> =
-    network.getExchangeRate(currencyCode)
+  private suspend fun fromNetwork(domestic: CurrencyCode, foreign: CurrencyCode): Result<ExchangeRate, NetworkError> =
+    network.getExchangeRate(domestic, foreign)
       .onSuccess { exchangeRate ->
         local.upsert(exchangeRate)
       }
@@ -61,8 +62,8 @@ class ConversionRepositoryImpl @Inject constructor(
    * Perhaps we'll want to add some local caching here later? Much easier to do if all the
    * ViewModels that need this info are pointed at this repository!
    */
-  override suspend fun getAvailableCurrencies(): Result<List<CurrencyCode>, NetworkError> =
-    network.getCurrencyCodes()
+  override suspend fun getAvailableForeignCodes(domestic: CurrencyCode): Result<List<CurrencyCode>, NetworkError> =
+    network.getCurrencyCodes(domestic)
 
 
   private companion object{

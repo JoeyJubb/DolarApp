@@ -19,22 +19,24 @@ class LocalDataStoreImpl @Inject constructor(
     .asSuccess()
 
   private fun toDataModel(domain: ExchangeRate) = LocalExchangeRate(
-    currencyCode = domain.currencyCode.value,
+    domesticCurrency = domain.domestic.value,
+    foreignCurrency = domain.foreign.value,
     ask = domain.ask,
     bid = domain.bid,
     timeStamp = domain.timeStamp,
   )
 
-  override suspend fun get(currency: CurrencyCode): Optional<ExchangeRate> =
-    exchangeRateDao.getByCurrencyCode(currency.value)
+  override suspend fun get(domestic: CurrencyCode, foreign: CurrencyCode): Optional<ExchangeRate> =
+    exchangeRateDao.getExchangeRate(domestic.value, foreign.value)
       ?.let(::toDomainModel)
       .asResult()
 
   private fun toDomainModel(local: LocalExchangeRate) = ExchangeRate(
-    currencyCode = CurrencyCode(local.currencyCode),
+    domestic = CurrencyCode(local.domesticCurrency),
+    foreign = CurrencyCode(local.foreignCurrency),
     ask = local.ask,
     bid = local.bid,
-    timeStamp = local.timeStamp
+    timeStamp = local.timeStamp,
   )
 
 }

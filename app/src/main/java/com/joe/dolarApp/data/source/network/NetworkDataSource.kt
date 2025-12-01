@@ -10,7 +10,12 @@ import com.joe.dolarApp.util.errorHandling.Result
  */
 interface NetworkDataSource {
 
-  suspend fun getExchangeRate(currencyCode: CurrencyCode): Result<ExchangeRate, NetworkError>
+  suspend fun getExchangeRate(
+    domestic: CurrencyCode,
+    foreign: CurrencyCode
+  ): Result<ExchangeRate, NetworkError>
 
-  suspend fun getCurrencyCodes(): Result<List<CurrencyCode>, NetworkError>
+  suspend fun getCurrencyCodes(
+    domestic: CurrencyCode,
+  ): Result<List<CurrencyCode>, NetworkError>
 }

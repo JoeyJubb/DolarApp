@@ -37,7 +37,8 @@ class LocalDataStoreImplTest {
     // when
     val result = sut.upsert(
       ExchangeRate(
-        currencyCode = CurrencyCode(CURRENCY_CODE),
+        domestic = DOMESTIC,
+        foreign = FOREIGN,
         ask = "ask",
         bid = "bid",
         timeStamp = timeStamp,
@@ -47,7 +48,8 @@ class LocalDataStoreImplTest {
     // then
     expectThat(result).isSuccess()
     expectThat(captureSlot.captured) {
-      get { currencyCode } isEqualTo CURRENCY_CODE
+      get { domesticCurrency } isEqualTo DOMESTIC.value
+      get { foreignCurrency } isEqualTo FOREIGN.value
       get { ask } isEqualTo "ask"
       get { bid } isEqualTo "bid"
       get { this.timeStamp } isSameInstanceAs timeStamp
@@ -58,20 +60,24 @@ class LocalDataStoreImplTest {
   fun `get happy path`() = testRule.runTest {
     // given
     val timeStamp = mockk<Instant>()
-    coEvery { exchangeRateDao.getByCurrencyCode(CURRENCY_CODE) } returns LocalExchangeRate(
-      currencyCode = CURRENCY_CODE,
-      ask = "ask",
-      bid = "bid",
-      timeStamp = timeStamp,
-    )
+    coEvery { exchangeRateDao.getExchangeRate(any(), any()) } answers {
+      LocalExchangeRate(
+        domesticCurrency = firstArg(),
+        foreignCurrency = secondArg(),
+        ask = "ask",
+        bid = "bid",
+        timeStamp = timeStamp,
+      )
+    }
 
     // when
-    val result = sut.get(CurrencyCode(CURRENCY_CODE))
+    val result = sut.get(DOMESTIC, FOREIGN)
 
     // then
     expectThat(result).isSuccess()
       .and {
-        get { currencyCode }.get { value } isEqualTo CURRENCY_CODE
+        get { domestic } isEqualTo DOMESTIC
+        get { foreign } isEqualTo FOREIGN
         get { ask } isEqualTo "ask"
         get { bid } isEqualTo "bid"
         get { this.timeStamp } isSameInstanceAs timeStamp
@@ -81,10 +87,10 @@ class LocalDataStoreImplTest {
   @Test
   fun `get failure path - item not found`() = testRule.runTest {
     // given
-    coEvery { exchangeRateDao.getByCurrencyCode(CURRENCY_CODE) } returns null
+    coEvery { exchangeRateDao.getExchangeRate(DOMESTIC.value, FOREIGN.value) } returns null
 
     // when
-    val result = sut.get(CurrencyCode(CURRENCY_CODE))
+    val result = sut.get(DOMESTIC, FOREIGN)
 
     // then
     expectThat(result)
@@ -92,6 +98,7 @@ class LocalDataStoreImplTest {
   }
 
   private companion object {
-    private const val CURRENCY_CODE = "currency_code"
+    private val DOMESTIC = CurrencyCode("dom")
+    private val FOREIGN = CurrencyCode("for")
   }
 }

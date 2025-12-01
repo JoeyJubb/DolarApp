@@ -6,14 +6,20 @@ import com.joe.dolarApp.util.errorHandling.Result
 interface ConversionRepository {
 
   /**
-   * Attempts to get an [ExchangeRate] for the given [CurrencyCode]
+   * Attempts to get an [ExchangeRate] for the given [domestic] and [foreign] currency codes
    *
    * @param forceRefresh when true, ignore any local cache
    */
   suspend fun getExchangeRate(
-    currencyCode: CurrencyCode,
+    domestic: CurrencyCode,
+    foreign: CurrencyCode,
     forceRefresh: Boolean = false,
   ): Result<ExchangeRate, NetworkError>
 
-  suspend fun getAvailableCurrencies(): Result<List<CurrencyCode>, NetworkError>
+  /**
+   * Get a list of foreign currencies we can get exchange rates for the given [domestic] currency
+   */
+  suspend fun getAvailableForeignCodes(
+    domestic: CurrencyCode,
+  ): Result<List<CurrencyCode>, NetworkError>
 }

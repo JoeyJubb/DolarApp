@@ -42,25 +42,29 @@ import javax.inject.Inject
 class FakeNetworkDataSource @Inject constructor(
   private val exchangeRates : List<ExchangeRate> = listOf(
     ExchangeRate(
-      currencyCode = CurrencyCode("MXN"),
+      foreign = CurrencyCode("MXN"),
+      domestic = CurrencyCode("USDC"),
       ask = "1.83119000000",
       bid = "1.82819000000",
       timeStamp = Instant.parse("2025-11-29T13:46:21.477342420")
     ),
     ExchangeRate(
-      currencyCode = CurrencyCode("ARS"),
+      foreign = CurrencyCode("ARS"),
+      domestic = CurrencyCode("USDC"),
       ask = "1.5115100000000",
       bid = "1.4865543000000",
       timeStamp = Instant.parse("2025-11-29T13:46:21.486365910")
     ),
     ExchangeRate(
-      currencyCode = CurrencyCode("BRL"),
+      foreign = CurrencyCode("BRL"),
+      domestic = CurrencyCode("USDC"),
       ask = "5.3822775000",
       bid = "5.3256380000",
       timeStamp = Instant.parse("2025-11-29T13:46:21.494420614")
     ),
     ExchangeRate(
-      currencyCode = CurrencyCode("COP"),
+      foreign = CurrencyCode("COP"),
+      domestic = CurrencyCode("USDC"),
       ask = "3.7876313000000",
       bid = "3.7466300000000",
       timeStamp = Instant.parse("2025-11-29T13:46:21.502238239")
@@ -70,13 +74,17 @@ class FakeNetworkDataSource @Inject constructor(
 
 
   override suspend fun getExchangeRate(
-    currencyCode: CurrencyCode
+    domestic: CurrencyCode,
+    foreign: CurrencyCode
   ): Result<ExchangeRate, NetworkError> = exchangeRates
-    .find { it.currencyCode == currencyCode }
+    .find { it.domestic == domestic }
     .asResult()
-    .mapError{ NetworkError.NetworkFailure(debugMessage = "Cannot find exchange rate for $currencyCode") }
+    .mapError{ NetworkError.NetworkFailure(debugMessage = "Cannot find exchange rate for $domestic") }
 
-  override suspend fun getCurrencyCodes(): Result<List<CurrencyCode>, NetworkError> = exchangeRates
-    .map { it.currencyCode }
+  override suspend fun getCurrencyCodes(domestic: CurrencyCode): Result<List<CurrencyCode>, NetworkError> = exchangeRates
+    .asSequence()
+    .filter { it.domestic == domestic }
+    .map { it.domestic }
+    .toList()
     .asSuccess()
 }

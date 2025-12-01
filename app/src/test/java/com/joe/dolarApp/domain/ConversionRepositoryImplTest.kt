@@ -44,13 +44,13 @@ class ConversionRepositoryImplTest {
   }
 
   @Test
-  fun getAvailableCurrencies() = runTest {
+  fun getAvailableForeignCodes() = runTest {
     // given
     val networkResult = Result.Failure(mockk<NetworkError>())
-    coEvery { network.getCurrencyCodes() } returns networkResult
+    coEvery { network.getCurrencyCodes(domestic) } returns networkResult
 
     // when
-    val result = sut.getAvailableCurrencies()
+    val result = sut.getAvailableForeignCodes(domestic)
 
     // then
     expectThat(result) isSameInstanceAs networkResult
@@ -61,10 +61,10 @@ class ConversionRepositoryImplTest {
     // given
     val justInTheNickOfTimeStamp: Instant = clock.now() - (maximumCacheAge - 1.nanoseconds)
     val fromLocal = exchangeRate(timeStamp = justInTheNickOfTimeStamp)
-    coEvery { local.get(currencyCode) } returns fromLocal.asSuccess()
+    coEvery { local.get(domestic, foreign) } returns fromLocal.asSuccess()
 
     // when
-    val result = sut.getExchangeRate(currencyCode)
+    val result = sut.getExchangeRate(domestic, foreign)
 
     // then
     expectThat(result)
@@ -78,12 +78,12 @@ class ConversionRepositoryImplTest {
     // given
     val fromNetwork = exchangeRate()
     val upsertSlot = slot<ExchangeRate>()
-    coEvery { local.get(currencyCode) } returns Result.Failure(Unit)
+    coEvery { local.get(domestic, foreign) } returns Result.Failure(Unit)
     coJustRun { local.upsert(capture(upsertSlot)) }
-    coEvery { network.getExchangeRate(currencyCode) } returns fromNetwork.asSuccess()
+    coEvery { network.getExchangeRate(domestic, foreign) } returns fromNetwork.asSuccess()
 
     // when
-    val result = sut.getExchangeRate(currencyCode)
+    val result = sut.getExchangeRate(domestic, foreign)
 
     // then
     expectThat(result)
@@ -101,12 +101,12 @@ class ConversionRepositoryImplTest {
     val fromLocal = exchangeRate(timeStamp = tooOldTimeStamp)
     val fromNetwork = exchangeRate()
     val upsertSlot = slot<ExchangeRate>()
-    coEvery { local.get(currencyCode) } returns fromLocal.asSuccess()
+    coEvery { local.get(domestic, foreign) } returns fromLocal.asSuccess()
     coJustRun { local.upsert(capture(upsertSlot)) }
-    coEvery { network.getExchangeRate(currencyCode) } returns fromNetwork.asSuccess()
+    coEvery { network.getExchangeRate(domestic, foreign) } returns fromNetwork.asSuccess()
 
     // when
-    val result = sut.getExchangeRate(currencyCode)
+    val result = sut.getExchangeRate(domestic, foreign)
 
     // then
     expectThat(result)
@@ -122,11 +122,11 @@ class ConversionRepositoryImplTest {
     // given
     val tooOldTimeStamp: Instant = clock.now() - maximumCacheAge
     val fromLocal = exchangeRate(timeStamp = tooOldTimeStamp)
-    coEvery { local.get(currencyCode) } returns fromLocal.asSuccess()
-    coEvery { network.getExchangeRate(currencyCode) } returns Result.Failure(NetworkError.Disconnected)
+    coEvery { local.get(domestic, foreign) } returns fromLocal.asSuccess()
+    coEvery { network.getExchangeRate(domestic, foreign) } returns Result.Failure(NetworkError.Disconnected)
 
     // when
-    val result = sut.getExchangeRate(currencyCode)
+    val result = sut.getExchangeRate(domestic, foreign)
 
     // then
     expectThat(result)
@@ -140,10 +140,10 @@ class ConversionRepositoryImplTest {
     val fromNetwork = exchangeRate()
     val upsertSlot = slot<ExchangeRate>()
     coJustRun { local.upsert(capture(upsertSlot)) }
-    coEvery { network.getExchangeRate(currencyCode) } returns fromNetwork.asSuccess()
+    coEvery { network.getExchangeRate(domestic, foreign) } returns fromNetwork.asSuccess()
 
     // when
-    val result = sut.getExchangeRate(currencyCode, forceRefresh = true)
+    val result = sut.getExchangeRate(domestic, foreign, forceRefresh = true)
 
     // then
     expectThat(result)
@@ -153,20 +153,23 @@ class ConversionRepositoryImplTest {
     expectThat(upsertSlot.captured)
       .isEqualTo(fromNetwork)
 
-    coVerify(exactly = 0) { local.get(any()) }
+    coVerify(exactly = 0) { local.get(any(), any()) }
   }
 
   private fun exchangeRate(
-    currencyCode: CurrencyCode = Companion.currencyCode,
+    domestic: CurrencyCode = Companion.domestic,
+    foreign: CurrencyCode = Companion.foreign,
     timeStamp: Instant = clock.now(),
   ): ExchangeRate = mockk<ExchangeRate> {
-    every { this@mockk.currencyCode } returns currencyCode
+    every { this@mockk.domestic } returns domestic
+    every { this@mockk.foreign } returns foreign
     every { this@mockk.timeStamp } returns timeStamp
   }
 
   private companion object {
     private val maximumCacheAge = 1.days
-    private val currencyCode = CurrencyCode("currencyCode")
+    private val domestic = CurrencyCode("domestic")
+    private val foreign = CurrencyCode("foreign")
   }
 
 }

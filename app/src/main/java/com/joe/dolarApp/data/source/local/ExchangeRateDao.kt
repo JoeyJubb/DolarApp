@@ -8,8 +8,8 @@ import androidx.room.Upsert
 @Dao
 interface ExchangeRateDao {
 
-  @Query("SELECT * FROM exchange_rates WHERE currencyCode = :currencyCode")
-  suspend fun getByCurrencyCode(currencyCode: String): LocalExchangeRate?
+  @Query("SELECT * FROM exchange_rates WHERE domesticCurrency = :domestic AND foreignCurrency = :foreign")
+  suspend fun getExchangeRate(domestic: String, foreign: String): LocalExchangeRate?
 
   @Upsert
   suspend fun upsert(exchangeRate: LocalExchangeRate)

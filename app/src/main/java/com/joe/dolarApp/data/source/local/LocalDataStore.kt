@@ -9,5 +9,5 @@ interface LocalDataStore {
 
   suspend fun upsert(exchangeRate: ExchangeRate): Result<Unit, Unit>
 
-  suspend fun get(currency: CurrencyCode): Optional<ExchangeRate>
+  suspend fun get(domestic: CurrencyCode, foreign: CurrencyCode): Optional<ExchangeRate>
 }

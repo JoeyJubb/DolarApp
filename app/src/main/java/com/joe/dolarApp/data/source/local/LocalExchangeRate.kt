@@ -25,10 +25,12 @@ import kotlinx.datetime.Instant
  * the data layer only.
  */
 @Entity(
-  tableName = "exchange_rates"
+  tableName = "exchange_rates",
+  primaryKeys = ["domesticCurrency", "foreignCurrency"]
 )
 data class LocalExchangeRate(
-  @PrimaryKey val currencyCode: String,
+  val domesticCurrency: String,
+  val foreignCurrency: String,
   val ask: String,
   val bid: String,
   val timeStamp: Instant,
