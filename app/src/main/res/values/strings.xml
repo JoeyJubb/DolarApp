@@ -4,6 +4,7 @@
 
     <string name="title_conversion_calculator">Conversion Calculator</string>
     <string name="title_about">About</string>
+    <string name="btn_action_retry">Retry</string>
 
 
 </resources>

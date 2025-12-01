@@ -43,6 +43,7 @@ dependencies {
   api(libs.mockk.android)
   api(libs.mockk.agent)
   api(libs.strikt.core)
+  api(libs.test.parameter.injector)
   implementation(libs.kotlinx.datetime)
 
   implementation(libs.kotlinx.coroutines.android)

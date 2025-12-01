@@ -1,4 +1,6 @@
 import com.joe.dolarApp.TestDispatcherProvider
+import com.joe.dolarApp.util.DispatcherProvider
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -19,6 +21,11 @@ class CoroutineTestRule private constructor(
 
   val testScheduler: TestCoroutineScheduler = testCoroutineDispatcher.scheduler
   val testScope: TestScope = TestScope(testCoroutineDispatcher)
+  val testDispatcherProvider: DispatcherProvider = object : DispatcherProvider{
+    override val main: CoroutineDispatcher = testCoroutineDispatcher
+    override val io: CoroutineDispatcher = testCoroutineDispatcher
+    override val unconfined: CoroutineDispatcher = testCoroutineDispatcher
+  }
 
   override fun apply(base: org.junit.runners.model.Statement, description: org.junit.runner.Description?) = object : org.junit.runners.model.Statement() {
     override fun evaluate() {

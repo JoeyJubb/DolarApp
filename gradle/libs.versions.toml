@@ -23,6 +23,7 @@ timber = "5.0.1"
 truth = "1.4.4"
 mockk = "1.14.6"
 strikt = "0.34.0"
+testParameterInjector = "1.20"
 
 [libraries]
 accompanist-appcompat-theme = { group = "com.google.accompanist", name = "accompanist-appcompat-theme", version.ref = "accompanist" }
@@ -69,6 +70,7 @@ timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "tim
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockk" }
 strikt-core = { group = "io.strikt", name = "strikt-core", version.ref = "strikt" }
+test-parameter-injector = { group = "com.google.testparameterinjector", name = "test-parameter-injector", version.ref = "testParameterInjector"}
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }

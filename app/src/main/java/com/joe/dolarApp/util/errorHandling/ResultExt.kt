@@ -1,10 +1,16 @@
 package com.joe.dolarApp.util.errorHandling
 
+import com.joe.dolarApp.util.LoadState
+import kotlinx.coroutines.CancellationException
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
+
 fun <T> T.asSuccess(): Result.Success<T> = Result.Success(this)
 
 fun <E> E.asFailure(): Result.Failure<E> = Result.Failure(this)
 
 fun <T> T?.asResult(): Optional<T> = this?.asSuccess() ?: Result.Failure(Unit)
+
 
 inline fun <T, E1, E2> Result<T, E1>.mapError(transform : (E1)-> E2): Result<T, E2> = when(this){
   is Result.Failure -> Result.Failure(transform(error))
@@ -55,3 +61,40 @@ fun <T1, T2, E> Result<T1, E>.fold(
 }
 
 fun <T, E> Result<T, E>.getOrNull() : T? = (this as? Result.Success)?.value
+fun <T> Result<T, Throwable>.getOrThrow() : T = when(this){
+  is Result.Failure -> throw this.error
+  is Result.Success -> this.value
+}
+
+fun <T> tryCatching(function : () -> T) : Result<T, Throwable> =
+  try {
+    function().asSuccess()
+  } catch (e: CancellationException){
+    throw e
+  } catch (e: Throwable){
+    e.asFailure()
+  }
+
+suspend fun <T> coTryCatching(function : suspend () -> T) : Result<T, Throwable> =
+  try {
+    function().asSuccess()
+  } catch (e: CancellationException){
+    throw e
+  } catch (e: Throwable){
+    e.asFailure()
+  }
+
+@OptIn(ExperimentalContracts::class)
+fun <V, E> Result<V, E>.isFailure(): Boolean {
+  contract {
+    returns(true) implies (this@isFailure is Result.Failure)
+    returns(false) implies (this@isFailure is Result.Success)
+  }
+  return this is Result.Failure
+}
+
+
+fun <T, E> Result<T, E>.asLoadState() : LoadState<T, E> = when(this){
+  is Result.Failure -> LoadState.Failure(error)
+  is Result.Success -> LoadState.Success(value)
+}

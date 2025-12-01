@@ -11,7 +11,7 @@ fun <R, E> Assertion.Builder<out Result<R, E>>.isSuccess(): Assertion.Builder<R>
       }
       is Result.Failure -> {
         fail(
-          description = "Expected failure",
+          description = "Is a failure",
           actual = subject.error,
         )
       }
@@ -26,10 +26,9 @@ fun <R, E> Assertion.Builder<out Result<R, E>>.isSuccess(): Assertion.Builder<R>
 
 fun <R, E> Assertion.Builder<out Result<R, E>>.isFailure(): Assertion.Builder<E> =
   assert("is failure") { subject ->
-    println("subject -> $subject")
     when(subject){
       is Result.Success -> fail(
-        description = "Success",
+        description = "Is a Success",
         actual = subject.value
       )
       is Result.Failure -> pass()
