@@ -104,12 +104,6 @@ class FakeNetworkDataSource @Inject constructor() : NetworkDataSource {
         .toList()
     }
       .mapError { NetworkError.ClientFailure(it) }
-      .flatMap { if(it.isEmpty()) {
-        NetworkError.NetworkFailure(debugMessage = "List is empty").asFailure()
-      } else {
-        it.asSuccess()
-      }
-      }
   }
 
 }

@@ -6,7 +6,9 @@ import com.joe.dolarApp.data.source.network.NetworkDataSource
 import com.joe.dolarApp.util.errorHandling.NetworkError
 import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.Result.Failure
+import com.joe.dolarApp.util.errorHandling.asFailure
 import com.joe.dolarApp.util.errorHandling.asSuccess
+import com.joe.dolarApp.util.errorHandling.flatMap
 import com.joe.dolarApp.util.errorHandling.getOrNull
 import com.joe.dolarApp.util.errorHandling.onSuccess
 import dagger.Reusable
@@ -65,6 +67,12 @@ class ConversionRepositoryImpl @Inject constructor(
    */
   override suspend fun getAvailableForeignCodes(domestic: CurrencyCode): Result<List<CurrencyCode>, NetworkError> =
     network.getCurrencyCodes(domestic)
+      .flatMap { if(it.isEmpty()) {
+        NetworkError.NetworkFailure(debugMessage = "List is empty").asFailure()
+      } else {
+        it.asSuccess()
+      }
+      }
 
 
   private companion object{

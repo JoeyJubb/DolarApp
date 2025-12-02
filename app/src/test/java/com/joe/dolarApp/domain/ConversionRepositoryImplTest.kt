@@ -4,6 +4,7 @@ import CoroutineTestRule
 import com.joe.dolarApp.TestClock
 import com.joe.dolarApp.data.source.local.LocalDataStore
 import com.joe.dolarApp.data.source.network.NetworkDataSource
+import com.joe.dolarApp.isFailure
 import com.joe.dolarApp.isSuccess
 import com.joe.dolarApp.util.errorHandling.NetworkError
 import com.joe.dolarApp.util.errorHandling.Result
@@ -54,6 +55,18 @@ class ConversionRepositoryImplTest {
 
     // then
     expectThat(result) isSameInstanceAs networkResult
+  }
+
+  @Test
+  fun `getAvailableForeignCodes (empty)`() = runTest {
+    // given
+    coEvery { network.getCurrencyCodes(domestic) } returns emptyList<CurrencyCode>().asSuccess()
+
+    // when
+    val result = sut.getAvailableForeignCodes(domestic)
+
+    // then
+    expectThat(result).isFailure()
   }
 
   @Test

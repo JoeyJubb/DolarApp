@@ -35,12 +35,11 @@ class CurrencyExchangerImplTest {
       value = testCase.givenInput,
       rate = testCase.givenExchangeRate,
       from = CurrencyCode("FROM"),
-      to = CurrencyCode("TO"),
       invertRate = testCase.givenInvertedRate,
     )
 
     // then
-    expectThat(result).isSuccess() isEqualTo "TO ${testCase.expect}"
+    expectThat(result).isSuccess() isEqualTo testCase.expect
   }
 
   @Test
@@ -52,7 +51,6 @@ class CurrencyExchangerImplTest {
       value = testCase.givenInput,
       rate = "1",
       from = CurrencyCode("FROM"),
-      to = CurrencyCode("TO"),
       invertRate = false,
     )
 
