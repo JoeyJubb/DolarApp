@@ -3,6 +3,7 @@ package com.joe.dolarApp.presentation.calculator
 import android.content.Context
 import android.icu.text.DecimalFormatSymbols
 import android.icu.util.Currency
+import android.os.Build
 import androidx.collection.LruCache
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.util.errorHandling.Result
@@ -36,11 +37,14 @@ class CurrencyFormatterProviderImpl @Inject constructor(
 ) : CurrencyFormatterProvider {
 
   private val locale by lazy {
-    applicationContext.resources.configuration.locales[0]
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      applicationContext.resources.configuration.locales[0]
+    } else {
+      applicationContext.resources.configuration.locale
+    }
   }
 
   private val lruCache = LruCache<CurrencyCode, CurrencyFormatter>(maxSize = 2)
-
 
   override operator fun get(currencyCode: CurrencyCode): Result<CurrencyFormatter, Throwable> {
     return lruCache[currencyCode]?.asSuccess()

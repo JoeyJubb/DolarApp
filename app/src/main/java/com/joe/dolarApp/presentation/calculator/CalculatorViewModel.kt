@@ -65,17 +65,9 @@ class CalculatorViewModel @Inject constructor(
   private val conversionState: Flow<Result<CalculatorUiState.ConversionUiState, ErrorUiState>> =
     delegate.observe()
       .map {
-        it.map { state ->
-          CalculatorUiState.ConversionUiState(
-            conversionRateString = state.rate,
-            timestamp = state.timeStamp,
-            from = state.from,
-            to = state.to,
-          )
+        it.mapError {
+          errorStateProvider.createGenericError()
         }
-          .mapError {
-            errorStateProvider.createGenericError()
-          }
       }
 
   override val uiState: StateFlow<LoadState<CalculatorUiState, ErrorUiState>> = combine(
@@ -137,6 +129,8 @@ class CalculatorViewModel @Inject constructor(
     CalculatorUiEvent.OnSwapDirectionPress -> delegate.flip()
     is CalculatorUiEvent.OnCurrencySelected -> onCurrencySelected(event.currencyCode)
     is CalculatorUiEvent.OnBottomSheetVisibilityChanged -> showCurrencySelection.update { event.isVisible }
+    is CalculatorUiEvent.OnDomesticTextUpdated -> delegate.onDomesticUpdated(event.text)
+    is CalculatorUiEvent.OnForeignTextUpdated -> delegate.onForeignUpdated(event.text)
   }
 
   private fun retry() = isDataInvalid.update { true }
