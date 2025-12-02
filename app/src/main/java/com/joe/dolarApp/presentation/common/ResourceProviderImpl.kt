@@ -7,9 +7,9 @@ import javax.inject.Inject
 
 class ResourceProviderImpl @Inject constructor(
   @ApplicationContext appContext: Context,
-) : ResourceProvider{
+) : ResourceProvider {
 
-  private val resources : Resources = appContext.resources
+  private val resources: Resources = appContext.resources
 
   override fun getString(stringRes: Int, vararg formatArgs: Any): String {
     return resources.getString(stringRes, *formatArgs)

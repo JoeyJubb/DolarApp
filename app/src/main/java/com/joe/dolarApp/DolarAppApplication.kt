@@ -1,4 +1,3 @@
-
 package com.joe.dolarApp
 
 import android.app.Application

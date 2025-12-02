@@ -1,4 +1,3 @@
-
 package com.joe.dolarApp.presentation.about
 
 import com.joe.dolarApp.presentation.common.DolarAppViewModel

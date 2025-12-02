@@ -19,7 +19,6 @@
 package com.joe.dolarApp.di
 
 import android.content.Context
-import android.os.SystemClock
 import androidx.room.Room
 import com.joe.dolarApp.data.source.local.ExchangeRateDao
 import com.joe.dolarApp.data.source.local.ExchangeRateDatabase
@@ -27,8 +26,6 @@ import com.joe.dolarApp.data.source.local.LocalDataStore
 import com.joe.dolarApp.data.source.local.LocalDataStoreImpl
 import com.joe.dolarApp.data.source.network.DelegatingNetworkDataSource
 import com.joe.dolarApp.data.source.network.NetworkDataSource
-import com.joe.dolarApp.data.source.network.FakeNetworkDataSource
-import com.joe.dolarApp.data.source.network.NetworkDataSourceImpl
 import com.joe.dolarApp.domain.ConversionRepository
 import com.joe.dolarApp.domain.ConversionRepositoryImpl
 import com.joe.dolarApp.domain.CurrencyExchanger
@@ -39,8 +36,6 @@ import com.joe.dolarApp.presentation.calculator.CurrencyFormatterProvider
 import com.joe.dolarApp.presentation.calculator.CurrencyFormatterProviderImpl
 import com.joe.dolarApp.presentation.common.ResourceProvider
 import com.joe.dolarApp.presentation.common.ResourceProviderImpl
-import com.joe.dolarApp.util.DispatcherProvider
-import com.joe.dolarApp.util.DispatcherProviderImpl
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -50,7 +45,6 @@ import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.datetime.Clock
-import java.text.DecimalFormatSymbols
 import javax.inject.Singleton
 
 @Module
@@ -91,6 +85,7 @@ interface DataSourceModule {
   @Binds
   fun bindLocalDataStore(impl: LocalDataStoreImpl): LocalDataStore
 }
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {

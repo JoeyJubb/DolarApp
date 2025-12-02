@@ -17,7 +17,6 @@
 package com.joe.dolarApp.data.source.local
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 import kotlinx.datetime.Instant
 
 /**

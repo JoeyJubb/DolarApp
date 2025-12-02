@@ -7,14 +7,14 @@ import com.joe.dolarApp.domain.ExchangeRate
 import com.joe.dolarApp.presentation.calculator.CalculatorUiState.ErrorUiState
 import com.joe.dolarApp.presentation.common.DolarAppViewModel
 import com.joe.dolarApp.util.LoadState
-import com.joe.dolarApp.util.LoadState.*
+import com.joe.dolarApp.util.LoadState.Failure
+import com.joe.dolarApp.util.LoadState.Loading
+import com.joe.dolarApp.util.LoadState.Success
 import com.joe.dolarApp.util.WhileUiSubscribed
-import com.joe.dolarApp.util.errorHandling.NetworkError
 import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.asLoadState
 import com.joe.dolarApp.util.errorHandling.map
 import com.joe.dolarApp.util.errorHandling.mapError
-import com.joe.dolarApp.util.errorHandling.onFailure
 import com.joe.dolarApp.util.errorHandling.onSuccess
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import timber.log.Timber
 import javax.inject.Inject
 
 
@@ -88,7 +87,7 @@ class CalculatorViewModel @Inject constructor(
 
     return@combine when (currencyList) {
       is Result.Failure -> Failure(currencyList.error)
-      is Result.Success -> when(exchangeRateLoadState){
+      is Result.Success -> when (exchangeRateLoadState) {
         is Failure -> Failure(exchangeRateLoadState.error)
         else -> when (conversionState) {
           is Result.Failure -> Failure(conversionState.error)
@@ -102,9 +101,11 @@ class CalculatorViewModel @Inject constructor(
               )
             )
           }
+
           null -> Loading
         }
       }
+
       null -> Loading
     }
   }.stateIn(

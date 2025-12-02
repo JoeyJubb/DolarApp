@@ -39,9 +39,9 @@ class DelegatingNetworkDataSource @Inject constructor(
   ): Result<T, NetworkError> {
     return function(actual)
       .recover {
-        if(shouldRecover(it)){
+        if (shouldRecover(it)) {
           function(fake)
-        }else{
+        } else {
           Result.Failure(it)
         }
       }

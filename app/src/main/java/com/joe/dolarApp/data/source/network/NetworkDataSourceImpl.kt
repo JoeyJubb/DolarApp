@@ -35,6 +35,7 @@ class NetworkDataSourceImpl @Inject constructor(
         cause = throwable,
         debugMessage = throwable.message()
       )
+
       is UnknownHostException -> NetworkError.Disconnected
       else -> ClientFailure(throwable)
     }
@@ -65,13 +66,14 @@ class NetworkDataSourceImpl @Inject constructor(
       ClientFailure(it)
     }
 
-  override suspend fun getCurrencyCodes(domestic: CurrencyCode): Result<List<CurrencyCode>, NetworkError> = safeCall {
-    dolarAppService.getCurrencies()
-  }.map {
-    it.map { currency ->
-      CurrencyCode(currency)
+  override suspend fun getCurrencyCodes(domestic: CurrencyCode): Result<List<CurrencyCode>, NetworkError> =
+    safeCall {
+      dolarAppService.getCurrencies()
+    }.map {
+      it.map { currency ->
+        CurrencyCode(currency)
+      }
     }
-  }
 
 
 }

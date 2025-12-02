@@ -136,7 +136,12 @@ class ConversionRepositoryImplTest {
     val tooOldTimeStamp: Instant = clock.now() - maximumCacheAge
     val fromLocal = exchangeRate(timeStamp = tooOldTimeStamp)
     coEvery { local.get(domestic, foreign) } returns fromLocal.asSuccess()
-    coEvery { network.getExchangeRate(domestic, foreign) } returns Result.Failure(NetworkError.Disconnected)
+    coEvery {
+      network.getExchangeRate(
+        domestic,
+        foreign
+      )
+    } returns Result.Failure(NetworkError.Disconnected)
 
     // when
     val result = sut.getExchangeRate(domestic, foreign)

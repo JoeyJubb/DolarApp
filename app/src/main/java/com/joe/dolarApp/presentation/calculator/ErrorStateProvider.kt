@@ -8,16 +8,18 @@ class ErrorStateProvider @Inject constructor(
   private val resourceProvider: ResourceProvider,
 ) {
 
-  fun createErrorState(networkError: NetworkError) : CalculatorUiState.ErrorUiState {
-    return when(networkError){
+  fun createErrorState(networkError: NetworkError): CalculatorUiState.ErrorUiState {
+    return when (networkError) {
       is NetworkError.ClientFailure -> CalculatorUiState.ErrorUiState(
         message = "TODO Client Failure\n${networkError.cause}",
         canRetry = false
       )
+
       NetworkError.Disconnected -> CalculatorUiState.ErrorUiState(
         message = "TODO message Not connected",
         canRetry = true
       )
+
       is NetworkError.NetworkFailure -> CalculatorUiState.ErrorUiState(
         message = "TODO Network Failure\n${networkError.cause}",
         canRetry = true

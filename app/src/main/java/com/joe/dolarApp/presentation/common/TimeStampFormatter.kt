@@ -23,12 +23,14 @@ class TimeStampFormatter @Inject constructor(
 
   @OptIn(FormatStringsInDatetimeFormats::class)
   operator fun invoke(instant: Instant): Result<String, Throwable> = tryCatching {
-    LocalDateTime.Format { byUnicodePattern(
-      DateFormat.getBestDateTimePattern(
-        locale,
-        "yyyy-MM-dd HH:mm:ss"
+    LocalDateTime.Format {
+      byUnicodePattern(
+        DateFormat.getBestDateTimePattern(
+          locale,
+          "yyyy-MM-dd HH:mm:ss"
+        )
       )
-    ) }.format(
+    }.format(
       instant.toLocalDateTime(TimeZone.currentSystemDefault())
     )
   }

@@ -2,10 +2,8 @@ package com.joe.dolarApp.presentation.common
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.joe.dolarApp.presentation.calculator.CalculatorUiEvent
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.publish
 import kotlinx.coroutines.launch
 
 abstract class DolarAppViewModel<ViewState, ViewEvent> : ViewModel() {
@@ -23,7 +21,7 @@ abstract class DolarAppViewModel<ViewState, ViewEvent> : ViewModel() {
     }
   }
 
-  fun onEvent(event: ViewEvent){
+  fun onEvent(event: ViewEvent) {
     viewModelScope.launch {
       eventQueue.emit(event)
     }

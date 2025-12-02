@@ -1,7 +1,6 @@
 package com.joe.dolarApp.presentation.calculator
 
 import com.joe.dolarApp.domain.CurrencyCode
-import com.joe.dolarApp.util.LoadState
 
 /**
  * UiState for the calculator screen.
@@ -11,7 +10,7 @@ data class CalculatorUiState(
   val currencySelection: List<CurrencyCode>,
   val isCurrencySelectionVisible: Boolean,
   val isRefreshing: Boolean,
-){
+) {
 
   data class ConversionUiState(
     val conversionRateString: String,
@@ -34,12 +33,12 @@ data class CalculatorUiState(
   )
 }
 
-sealed interface CalculatorUiEvent{
+sealed interface CalculatorUiEvent {
 
   object OnShowCurrencySelectionPress : CalculatorUiEvent
   object OnHideCurrencySelectionPress : CalculatorUiEvent
   object OnSwapDirectionPress : CalculatorUiEvent
   object OnRetryPress : CalculatorUiEvent
-  data class OnCurrencySelected(val currencyCode: CurrencyCode): CalculatorUiEvent
+  data class OnCurrencySelected(val currencyCode: CurrencyCode) : CalculatorUiEvent
   data class OnBottomSheetVisibilityChanged(val isVisible: Boolean) : CalculatorUiEvent
 }

@@ -315,8 +315,8 @@ private fun CurrencyList(
             onEvent(CalculatorUiEvent.OnCurrencySelected(currencyCode))
           },
           headlineContent = { Text(currencyCode.value) },
-          leadingContent = { CountryFlag(currencyCode)}
-          )
+          leadingContent = { CountryFlag(currencyCode) }
+        )
       }
     }
   }

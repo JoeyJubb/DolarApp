@@ -47,7 +47,7 @@ class ResultExtTest {
   @Test
   fun onSuccess() {
     // success invokes the function
-    val function : (Unit) -> Unit = mockk(relaxed = true)
+    val function: (Unit) -> Unit = mockk(relaxed = true)
     Result.Success(Unit).onSuccess(function)
     verify(exactly = 1) { function.invoke(Unit) }
 
@@ -61,7 +61,7 @@ class ResultExtTest {
     Result.Success(Unit).onFailure { fail("Result.Success should not invoke this function") }
 
     // failure invokes the function
-    val function : (Unit) -> Unit = mockk(relaxed = true)
+    val function: (Unit) -> Unit = mockk(relaxed = true)
     Result.Failure(Unit).onFailure(function)
     verify(exactly = 1) { function.invoke(Unit) }
   }
@@ -73,7 +73,7 @@ class ResultExtTest {
 
     // success is mapped
     val success = Result.Success(34)
-    val successResult = success.flatMap (function)
+    val successResult = success.flatMap(function)
     expectThat(successResult).isSuccess().isEqualTo("34")
 
     // failure isn't mapped
@@ -89,7 +89,7 @@ class ResultExtTest {
 
     // success isn't recovered
     val success = Result.Success(34)
-    val successResult = success.recover (function)
+    val successResult = success.recover(function)
     expectThat(successResult).isSuccess().isEqualTo(34) // not same instance due to typing
 
     // failure is recovered
@@ -107,7 +107,7 @@ class ResultExtTest {
     Result.Success(34)
       .fold(
         onSuccess = function,
-        onFailure = {fail()}
+        onFailure = { fail() }
       )
       .let {
         expectThat(it) isEqualTo "34"
@@ -116,7 +116,7 @@ class ResultExtTest {
     // fold failure
     Result.Failure(56)
       .fold(
-        onSuccess = {fail()},
+        onSuccess = { fail() },
         onFailure = function,
       )
       .let {

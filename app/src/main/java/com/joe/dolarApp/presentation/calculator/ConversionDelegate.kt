@@ -140,10 +140,10 @@ class ConversionDelegateImpl @Inject constructor(
     from: CurrencyCode,
     to: CurrencyCode,
     rate: String
-  ) : String = tryCatching{
+  ): String = tryCatching {
 
-    val fromRate = if(isDomesticToForeign) "1" else rate
-    val toRate = if(isDomesticToForeign) rate else "1"
+    val fromRate = if (isDomesticToForeign) "1" else rate
+    val toRate = if (isDomesticToForeign) rate else "1"
 
     resourceProvider.getString(
       R.string.conversion_string,

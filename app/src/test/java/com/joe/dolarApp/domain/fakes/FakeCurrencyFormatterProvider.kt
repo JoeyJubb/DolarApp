@@ -14,14 +14,14 @@ class FakeCurrencyFormatterProvider : CurrencyFormatterProvider {
     FakeCurrencyFormatter(currencyCode).asSuccess()
 
 
-  private class FakeCurrencyFormatter(val currencyCode: CurrencyCode) : CurrencyFormatter{
+  private class FakeCurrencyFormatter(val currencyCode: CurrencyCode) : CurrencyFormatter {
 
     override fun format(bigDecimal: BigDecimal): Result<String, Throwable> {
       return "${currencyCode.value} ${bigDecimal.toPlainString()}".asSuccess()
     }
 
     /** doesn't do any parsing */
-    override fun parse(string: String): Result<BigDecimal, Throwable> = tryCatching{
+    override fun parse(string: String): Result<BigDecimal, Throwable> = tryCatching {
       string.toBigDecimal()
     }
 

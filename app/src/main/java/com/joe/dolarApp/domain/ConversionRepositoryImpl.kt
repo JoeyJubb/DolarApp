@@ -1,4 +1,3 @@
-
 package com.joe.dolarApp.domain
 
 import com.joe.dolarApp.data.source.local.LocalDataStore
@@ -14,7 +13,6 @@ import com.joe.dolarApp.util.errorHandling.onSuccess
 import dagger.Reusable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import timber.log.Timber
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.days
 
@@ -29,13 +27,13 @@ class ConversionRepositoryImpl @Inject constructor(
     domestic: CurrencyCode,
     foreign: CurrencyCode,
     forceRefresh: Boolean
-  ): Result<ExchangeRate, NetworkError> = if(forceRefresh){
+  ): Result<ExchangeRate, NetworkError> = if (forceRefresh) {
     fromNetwork(domestic, foreign)
-  }else{
+  } else {
     /* Check the cache first */
     val local = local.get(domestic, foreign).getOrNull()
 
-    if(local == null || local.timeStamp.isTooOld()){
+    if (local == null || local.timeStamp.isTooOld()) {
       /* Cache miss or the cached value is too old */
       when (val network = fromNetwork(domestic, foreign)) {
         /* network failed! attempt to use the cached value even if it's too old */
@@ -43,13 +41,16 @@ class ConversionRepositoryImpl @Inject constructor(
         /* network success -- use the up to date value */
         is Result.Success -> network
       }
-    }else{
+    } else {
       local.asSuccess()
     }
   }
 
 
-  private suspend fun fromNetwork(domestic: CurrencyCode, foreign: CurrencyCode): Result<ExchangeRate, NetworkError> =
+  private suspend fun fromNetwork(
+    domestic: CurrencyCode,
+    foreign: CurrencyCode
+  ): Result<ExchangeRate, NetworkError> =
     network.getExchangeRate(domestic, foreign)
       .onSuccess { exchangeRate ->
         local.upsert(exchangeRate)
@@ -67,15 +68,16 @@ class ConversionRepositoryImpl @Inject constructor(
    */
   override suspend fun getAvailableForeignCodes(domestic: CurrencyCode): Result<List<CurrencyCode>, NetworkError> =
     network.getCurrencyCodes(domestic)
-      .flatMap { if(it.isEmpty()) {
-        NetworkError.NetworkFailure(debugMessage = "List is empty").asFailure()
-      } else {
-        it.asSuccess()
-      }
+      .flatMap {
+        if (it.isEmpty()) {
+          NetworkError.NetworkFailure(debugMessage = "List is empty").asFailure()
+        } else {
+          it.asSuccess()
+        }
       }
 
 
-  private companion object{
+  private companion object {
 
     /**
      * If the local entry is at least this old, automatically try the network.
