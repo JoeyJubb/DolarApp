@@ -27,7 +27,10 @@ class LocalDataStoreImpl @Inject constructor(
   )
 
   override suspend fun get(domestic: CurrencyCode, foreign: CurrencyCode): Optional<ExchangeRate> =
-    exchangeRateDao.getExchangeRate(domestic.value, foreign.value)
+    exchangeRateDao.getExchangeRate(
+      domestic = domestic.value,
+      foreign = foreign.value
+    )
       ?.let(::toDomainModel)
       .asResult()
 

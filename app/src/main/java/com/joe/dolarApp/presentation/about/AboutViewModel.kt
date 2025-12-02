@@ -18,10 +18,14 @@ data class AboutUiState(
  * ViewModel for the about screen.
  */
 @HiltViewModel
-class AboutViewModel @Inject constructor() : DolarAppViewModel<AboutUiState>() {
+class AboutViewModel @Inject constructor() : DolarAppViewModel<AboutUiState, Unit>() {
 
   override val uiState: StateFlow<AboutUiState> = MutableStateFlow(
     AboutUiState("Under construction (about)")
   )
+
+  override suspend fun handleEvent(event: Unit) {
+    TODO("Not yet implemented")
+  }
 
 }

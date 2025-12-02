@@ -151,6 +151,10 @@ dependencies {
   debugImplementation(libs.androidx.compose.ui.tooling.core)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
 
+  // Image Loading
+  implementation(libs.coil.compose)
+  implementation(libs.coil.network)
+
   // Dependencies for local unit tests
   testImplementation(composeBom)
   testImplementation(libs.junit4)

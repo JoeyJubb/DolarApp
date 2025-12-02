@@ -7,10 +7,17 @@ import com.joe.dolarApp.util.errorHandling.NetworkError
 import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.asResult
 import com.joe.dolarApp.util.errorHandling.asSuccess
+import com.joe.dolarApp.util.errorHandling.coTryCatching
 import com.joe.dolarApp.util.errorHandling.mapError
 import dagger.Reusable
+import kotlinx.coroutines.time.delay
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Temporary implementation during development.
@@ -39,52 +46,62 @@ import javax.inject.Inject
  * class only until we're ready to integrate properly into the backend.
  */
 @Reusable
-class FakeNetworkDataSource @Inject constructor(
-  private val exchangeRates : List<ExchangeRate> = listOf(
+class FakeNetworkDataSource @Inject constructor() : NetworkDataSource {
+
+  private val exchangeRates : List<ExchangeRate> by lazy {
+    listOf(
     ExchangeRate(
       foreign = CurrencyCode("MXN"),
-      domestic = CurrencyCode("USDC"),
+      domestic = CurrencyCode("USDc"),
       ask = "1.83119000000",
       bid = "1.82819000000",
-      timeStamp = Instant.parse("2025-11-29T13:46:21.477342420")
+      timeStamp = LocalDateTime.parse("2025-11-29T13:46:21.477342420").toInstant(TimeZone.UTC)
     ),
     ExchangeRate(
       foreign = CurrencyCode("ARS"),
-      domestic = CurrencyCode("USDC"),
+      domestic = CurrencyCode("USDc"),
       ask = "1.5115100000000",
       bid = "1.4865543000000",
-      timeStamp = Instant.parse("2025-11-29T13:46:21.486365910")
+      timeStamp = LocalDateTime.parse("2025-11-29T13:46:21.486365910").toInstant(TimeZone.UTC)
     ),
     ExchangeRate(
       foreign = CurrencyCode("BRL"),
-      domestic = CurrencyCode("USDC"),
+      domestic = CurrencyCode("USDc"),
       ask = "5.3822775000",
       bid = "5.3256380000",
-      timeStamp = Instant.parse("2025-11-29T13:46:21.494420614")
+      timeStamp = LocalDateTime.parse("2025-11-29T13:46:21.494420614").toInstant(TimeZone.UTC)
     ),
     ExchangeRate(
       foreign = CurrencyCode("COP"),
-      domestic = CurrencyCode("USDC"),
+      domestic = CurrencyCode("USDc"),
       ask = "3.7876313000000",
       bid = "3.7466300000000",
-      timeStamp = Instant.parse("2025-11-29T13:46:21.502238239")
+      timeStamp = LocalDateTime.parse("2025-11-29T13:46:21.502238239").toInstant(TimeZone.UTC)
     ),
   )
-) : NetworkDataSource {
-
+  }
 
   override suspend fun getExchangeRate(
     domestic: CurrencyCode,
     foreign: CurrencyCode
-  ): Result<ExchangeRate, NetworkError> = exchangeRates
-    .find { it.domestic == domestic }
-    .asResult()
-    .mapError{ NetworkError.NetworkFailure(debugMessage = "Cannot find exchange rate for $domestic") }
+  ): Result<ExchangeRate, NetworkError> {
+    kotlinx.coroutines.delay(1000L)
+    return coTryCatching {
+      exchangeRates.find { it.domestic == domestic && it.foreign == foreign }!!
+    }
+      .mapError { NetworkError.ClientFailure(it) }
+  }
 
-  override suspend fun getCurrencyCodes(domestic: CurrencyCode): Result<List<CurrencyCode>, NetworkError> = exchangeRates
-    .asSequence()
-    .filter { it.domestic == domestic }
-    .map { it.domestic }
-    .toList()
-    .asSuccess()
+  override suspend fun getCurrencyCodes(domestic: CurrencyCode): Result<List<CurrencyCode>, NetworkError> {
+    kotlinx.coroutines.delay(1000L)
+    return coTryCatching {
+      exchangeRates
+        .asSequence()
+        .filter { it.domestic == domestic }
+        .map { it.foreign }
+        .toList()
+    }
+      .mapError { NetworkError.ClientFailure(it) }
+  }
+
 }
