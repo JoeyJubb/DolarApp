@@ -41,7 +41,7 @@ class CalculatorViewModel @Inject constructor(
 ) : DolarAppViewModel<LoadState<CalculatorUiState, ErrorUiState>, CalculatorUiEvent>() {
 
   // could be injected
-  private val domesticCurrency = CurrencyCode("USDc")
+  private val domesticCurrency = CurrencyCode("USDC")
 
   private val isDataInvalid = MutableStateFlow(true)
 
@@ -61,7 +61,7 @@ class CalculatorViewModel @Inject constructor(
       }
 
   private val exchangeRateLoadState =
-    MutableStateFlow<LoadState<ExchangeRate, NetworkError>>(Loading)
+    MutableStateFlow<LoadState<ExchangeRate, ErrorUiState>>(Loading)
 
   private val conversionState: Flow<Result<CalculatorUiState.ConversionUiState, ErrorUiState>> =
     delegate.observe()
@@ -69,6 +69,7 @@ class CalculatorViewModel @Inject constructor(
         it.map { state ->
           CalculatorUiState.ConversionUiState(
             conversionRateString = state.rate,
+            timestamp = state.timeStamp,
             from = state.from,
             to = state.to,
           )
@@ -87,19 +88,22 @@ class CalculatorViewModel @Inject constructor(
 
     return@combine when (currencyList) {
       is Result.Failure -> Failure(currencyList.error)
-      is Result.Success -> when (conversionState) {
-        is Result.Failure -> Failure(conversionState.error)
-        is Result.Success -> {
-          Success(
-            CalculatorUiState(
-              conversion = conversionState.value,
-              currencySelection = currencyList.value,
-              isCurrencySelectionVisible = showCurrencyList,
-              isRefreshing = exchangeRateLoadState is Loading,
+      is Result.Success -> when(exchangeRateLoadState){
+        is Failure -> Failure(exchangeRateLoadState.error)
+        else -> when (conversionState) {
+          is Result.Failure -> Failure(conversionState.error)
+          is Result.Success -> {
+            Success(
+              CalculatorUiState(
+                conversion = conversionState.value,
+                currencySelection = currencyList.value,
+                isCurrencySelectionVisible = showCurrencyList,
+                isRefreshing = exchangeRateLoadState is Loading,
+              )
             )
-          )
+          }
+          null -> Loading
         }
-        null -> Loading
       }
       null -> Loading
     }
@@ -117,6 +121,7 @@ class CalculatorViewModel @Inject constructor(
       .onSuccess {
         delegate.setExchangeRate(it)
       }
+      .mapError { errorStateProvider.createErrorState(it) }
       .let { result ->
         exchangeRateLoadState.update { result.asLoadState() }
       }

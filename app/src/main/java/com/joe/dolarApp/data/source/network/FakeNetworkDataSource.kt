@@ -5,9 +5,11 @@ import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.domain.ExchangeRate
 import com.joe.dolarApp.util.errorHandling.NetworkError
 import com.joe.dolarApp.util.errorHandling.Result
+import com.joe.dolarApp.util.errorHandling.asFailure
 import com.joe.dolarApp.util.errorHandling.asResult
 import com.joe.dolarApp.util.errorHandling.asSuccess
 import com.joe.dolarApp.util.errorHandling.coTryCatching
+import com.joe.dolarApp.util.errorHandling.flatMap
 import com.joe.dolarApp.util.errorHandling.mapError
 import dagger.Reusable
 import kotlinx.coroutines.time.delay
@@ -52,28 +54,28 @@ class FakeNetworkDataSource @Inject constructor() : NetworkDataSource {
     listOf(
     ExchangeRate(
       foreign = CurrencyCode("MXN"),
-      domestic = CurrencyCode("USDc"),
+      domestic = CurrencyCode("USDC"),
       ask = "1.83119000000",
       bid = "1.82819000000",
       timeStamp = LocalDateTime.parse("2025-11-29T13:46:21.477342420").toInstant(TimeZone.UTC)
     ),
     ExchangeRate(
       foreign = CurrencyCode("ARS"),
-      domestic = CurrencyCode("USDc"),
+      domestic = CurrencyCode("USDC"),
       ask = "1.5115100000000",
       bid = "1.4865543000000",
       timeStamp = LocalDateTime.parse("2025-11-29T13:46:21.486365910").toInstant(TimeZone.UTC)
     ),
     ExchangeRate(
       foreign = CurrencyCode("BRL"),
-      domestic = CurrencyCode("USDc"),
+      domestic = CurrencyCode("USDC"),
       ask = "5.3822775000",
       bid = "5.3256380000",
       timeStamp = LocalDateTime.parse("2025-11-29T13:46:21.494420614").toInstant(TimeZone.UTC)
     ),
     ExchangeRate(
       foreign = CurrencyCode("COP"),
-      domestic = CurrencyCode("USDc"),
+      domestic = CurrencyCode("USDC"),
       ask = "3.7876313000000",
       bid = "3.7466300000000",
       timeStamp = LocalDateTime.parse("2025-11-29T13:46:21.502238239").toInstant(TimeZone.UTC)
@@ -102,6 +104,12 @@ class FakeNetworkDataSource @Inject constructor() : NetworkDataSource {
         .toList()
     }
       .mapError { NetworkError.ClientFailure(it) }
+      .flatMap { if(it.isEmpty()) {
+        NetworkError.NetworkFailure(debugMessage = "List is empty").asFailure()
+      } else {
+        it.asSuccess()
+      }
+      }
   }
 
 }

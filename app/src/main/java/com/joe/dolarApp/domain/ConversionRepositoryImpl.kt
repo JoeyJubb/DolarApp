@@ -12,6 +12,7 @@ import com.joe.dolarApp.util.errorHandling.onSuccess
 import dagger.Reusable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import timber.log.Timber
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.days
 

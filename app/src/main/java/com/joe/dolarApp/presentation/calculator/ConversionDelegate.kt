@@ -6,6 +6,7 @@ import com.joe.dolarApp.domain.CurrencyExchanger
 import com.joe.dolarApp.domain.ExchangeRate
 import com.joe.dolarApp.presentation.calculator.CalculatorUiState.CurrencyInputUiState
 import com.joe.dolarApp.presentation.common.ResourceProvider
+import com.joe.dolarApp.presentation.common.TimeStampFormatter
 import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.asSuccess
 import com.joe.dolarApp.util.errorHandling.flatMap
@@ -23,7 +24,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import timber.log.Timber
-import java.math.BigDecimal
 import javax.inject.Inject
 
 
@@ -37,6 +37,7 @@ interface ConversionDelegate {
     val from: CurrencyInputUiState,
     val to: CurrencyInputUiState,
     val rate: String,
+    val timeStamp: String,
   )
 
   fun observe(): Flow<Result<State, Unit>>
@@ -58,6 +59,7 @@ class ConversionDelegateImpl @Inject constructor(
   private val currencyExchanger: CurrencyExchanger,
   private val formatProvider: CurrencyFormatterProvider,
   private val resourceProvider: ResourceProvider,
+  private val timeStampFormatter: TimeStampFormatter,
 ) : ConversionDelegate {
 
   private data class TextDisplay(
@@ -128,6 +130,8 @@ class ConversionDelegateImpl @Inject constructor(
         from = from,
         to = to,
         rate = getRateString(isDomesticToForeign, from.currency, to.currency, rate),
+        timeStamp = timeStampFormatter(exchangeRate.timeStamp)
+          .getOrDefault(exchangeRate.timeStamp.toString()),
       ).asSuccess()
     }
 

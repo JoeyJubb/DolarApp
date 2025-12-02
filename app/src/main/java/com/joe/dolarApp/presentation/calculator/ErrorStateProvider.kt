@@ -11,7 +11,7 @@ class ErrorStateProvider @Inject constructor(
   fun createErrorState(networkError: NetworkError) : CalculatorUiState.ErrorUiState {
     return when(networkError){
       is NetworkError.ClientFailure -> CalculatorUiState.ErrorUiState(
-        message = "TDOD -> ${networkError.cause.message}",
+        message = "TODO Client Failure\n${networkError.cause}",
         canRetry = false
       )
       NetworkError.Disconnected -> CalculatorUiState.ErrorUiState(
@@ -19,7 +19,7 @@ class ErrorStateProvider @Inject constructor(
         canRetry = true
       )
       is NetworkError.NetworkFailure -> CalculatorUiState.ErrorUiState(
-        message = "TODO message network failure",
+        message = "TODO Network Failure\n${networkError.cause}",
         canRetry = true
       )
     }

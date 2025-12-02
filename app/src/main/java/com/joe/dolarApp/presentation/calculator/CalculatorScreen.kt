@@ -200,6 +200,9 @@ fun Conversion(
     Text(
       text = state.conversionRateString,
     )
+    Text(
+      text = stringResource(R.string.rates_accurate_at, state.timestamp),
+    )
 
     TextArea(
       modifier = textAreaModifier,

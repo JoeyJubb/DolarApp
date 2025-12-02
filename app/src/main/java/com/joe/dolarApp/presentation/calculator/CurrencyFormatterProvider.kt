@@ -52,7 +52,7 @@ class CurrencyFormatterProviderImpl @Inject constructor(
 
     val formatterCode = currencyCode.value.take(3)
     val prefix = when (currencyCode.value) {
-      "USDc" -> "USDc$"
+      "USDC" -> "USDC$"
       else -> Currency.getInstance(formatterCode).getSymbol(locale)
     }
     val decimalSeparator = DecimalFormatSymbols(locale).decimalSeparator

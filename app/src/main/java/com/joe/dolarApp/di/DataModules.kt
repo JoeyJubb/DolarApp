@@ -25,8 +25,10 @@ import com.joe.dolarApp.data.source.local.ExchangeRateDao
 import com.joe.dolarApp.data.source.local.ExchangeRateDatabase
 import com.joe.dolarApp.data.source.local.LocalDataStore
 import com.joe.dolarApp.data.source.local.LocalDataStoreImpl
+import com.joe.dolarApp.data.source.network.DelegatingNetworkDataSource
 import com.joe.dolarApp.data.source.network.NetworkDataSource
 import com.joe.dolarApp.data.source.network.FakeNetworkDataSource
+import com.joe.dolarApp.data.source.network.NetworkDataSourceImpl
 import com.joe.dolarApp.domain.ConversionRepository
 import com.joe.dolarApp.domain.ConversionRepositoryImpl
 import com.joe.dolarApp.domain.CurrencyExchanger
@@ -83,7 +85,7 @@ interface DataSourceModule {
 
   @Singleton
   @Binds
-  fun bindNetworkDataSource(impl: FakeNetworkDataSource): NetworkDataSource
+  fun bindNetworkDataSource(impl: DelegatingNetworkDataSource): NetworkDataSource
 
   @Singleton
   @Binds

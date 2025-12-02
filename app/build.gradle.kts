@@ -117,6 +117,8 @@ dependencies {
   implementation(libs.timber)
   implementation(libs.androidx.test.espresso.idling.resources)
   implementation(libs.kotlinx.datetime)
+  implementation(libs.retrofit)
+  implementation(libs.retrofit.gson)
 
   // Architecture Components
   implementation(libs.room.runtime)

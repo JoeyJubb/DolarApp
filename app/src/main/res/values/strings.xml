@@ -9,6 +9,7 @@
     <string name="btn_choose_currency">Choose currency</string>
 
     <string name="conversion_string">%1$s = %2$s</string>
+    <string name="rates_accurate_at">Rates accurate at: %1$s</string>
 
 
 </resources>

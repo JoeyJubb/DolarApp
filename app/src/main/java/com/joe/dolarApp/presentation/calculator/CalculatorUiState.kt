@@ -15,6 +15,7 @@ data class CalculatorUiState(
 
   data class ConversionUiState(
     val conversionRateString: String,
+    val timestamp: String,
     val from: CurrencyInputUiState,
     val to: CurrencyInputUiState,
   )
