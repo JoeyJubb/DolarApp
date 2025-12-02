@@ -1,7 +1,8 @@
 package com.joe.dolarApp.presentation.common
 
-import java.util.Locale
+import androidx.annotation.StringRes
 
 interface ResourceProvider {
+  fun getString(@StringRes stringRes: Int, vararg formatArgs: Any): String
 
 }

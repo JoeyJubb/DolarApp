@@ -2,9 +2,13 @@
 <resources>
     <string name="app_name">JoeF DolarApp</string>
 
-    <string name="title_conversion_calculator">Conversion Calculator</string>
+    <string name="title_conversion_calculator">Exchange Calculator</string>
     <string name="title_about">About</string>
     <string name="btn_action_retry">Retry</string>
+    <string name="btn_currency_swap">Swap currency positions</string>
+    <string name="btn_choose_currency">Choose currency</string>
+
+    <string name="conversion_string">%1$s = %2$s</string>
 
 
 </resources>

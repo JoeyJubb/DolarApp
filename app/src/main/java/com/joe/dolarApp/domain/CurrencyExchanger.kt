@@ -16,11 +16,13 @@ import kotlin.collections.flatMap
 
 interface CurrencyExchanger {
 
+  /**
+   * Accepts a formatted [value], but does not return a formatted result
+   */
   suspend fun doExchange(
     value: String,
     rate: String,
     from: CurrencyCode,
-    to: CurrencyCode,
     invertRate: Boolean,
   ): Result<String, Throwable>
 }
@@ -34,7 +36,6 @@ class CurrencyExchangerImpl @Inject constructor(
     value: String,
     rate: String,
     from: CurrencyCode,
-    to: CurrencyCode,
     invertRate: Boolean,
   ): Result<String, Throwable> = coTry{
 
@@ -45,11 +46,7 @@ class CurrencyExchangerImpl @Inject constructor(
         if(invertRate) it.divide(multiplicand, MathContext.DECIMAL64)
         else it.multiply(multiplicand)
       }
-      .let {
-        result -> currencyFormatterProvider[to]
-          .flatMap { it.format(result) }
-          .getOrThrow()
-      }
+      .toPlainString()
   }
 
   private suspend fun <T> coTry(function: suspend () -> T) : Result<T, Throwable> =

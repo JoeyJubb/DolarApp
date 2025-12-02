@@ -16,24 +16,35 @@
 
 package com.joe.dolarApp.presentation.calculator
 
-import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.Absolute.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -41,7 +52,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,12 +59,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.joe.dolarApp.R
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.presentation.calculator.CalculatorUiState.ConversionUiState
@@ -73,25 +89,33 @@ fun CalculatorScreen(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val onEvent = viewModel::onEvent
 
-  val childModifier = modifier.fillMaxSize()
+  val childModifier = modifier
+    .imePadding()
+    .navigationBarsPadding()
+    .padding(horizontal = 16.dp, vertical = 24.dp)
+    .fillMaxSize()
 
   when (val state = uiState) {
     is LoadState.Failure -> {
       NoBottomSheet(
+        modifier = childModifier,
         openDrawer = openDrawer,
         snackbarHostState = snackbarHostState,
-        content = { paddingValues -> ErrorContent(
-          error = state.error,
-          onEvent = onEvent,
-          modifier = childModifier.padding(paddingValues)
-        ) })
+        content = { paddingValues ->
+          ErrorContent(
+            error = state.error,
+            onEvent = onEvent,
+            modifier = Modifier.padding(paddingValues)
+          )
+        })
     }
 
     LoadState.Loading -> {
       NoBottomSheet(
+        modifier = childModifier,
         openDrawer = openDrawer,
         snackbarHostState = snackbarHostState,
-        content = { paddingValues -> LoadingContent(childModifier.padding(paddingValues)) }
+        content = { paddingValues -> LoadingContent(Modifier.padding(paddingValues)) }
       )
     }
 
@@ -118,12 +142,14 @@ private fun CalculatorContent(
 ) {
   val scaffoldState = rememberBottomSheetScaffoldState(
     bottomSheetState = rememberModalBottomSheetState(
-      skipPartiallyExpanded = true
+      skipPartiallyExpanded = true,
     )
   )
+  val keyboardController = LocalSoftwareKeyboardController.current
 
   LaunchedEffect(uiState.isCurrencySelectionVisible) {
     if (uiState.isCurrencySelectionVisible) {
+      keyboardController?.hide()
       scaffoldState.bottomSheetState.show()
     } else {
       scaffoldState.bottomSheetState.hide()
@@ -141,6 +167,7 @@ private fun CalculatorContent(
     topBar = { CalculatorTopBar(openDrawer) },
     sheetContent = {
       CurrencyList(
+        modifier = Modifier.navigationBarsPadding(),
         state = uiState.currencySelection,
         onEvent = onEvent,
       )
@@ -149,6 +176,7 @@ private fun CalculatorContent(
 
     Conversion(
       state = uiState.conversion,
+      isRefreshing = uiState.isRefreshing,
       onEvent = onEvent,
       modifier = modifier.padding(paddingValues)
     )
@@ -158,25 +186,47 @@ private fun CalculatorContent(
 @Composable
 fun Conversion(
   state: ConversionUiState,
+  isRefreshing: Boolean,
   onEvent: (CalculatorUiEvent) -> Unit,
   modifier: Modifier = Modifier,
 ) {
   Column(
-    modifier = modifier,
-    verticalArrangement = spacedBy(8.dp)
+    modifier = modifier.verticalScroll(rememberScrollState()),
+    verticalArrangement = spacedBy(8.dp),
   ) {
 
-    Text(state.conversionRateString)
+    val textAreaModifier = Modifier.fillMaxWidth()
 
-    TextArea(state.from, onEvent)
-
-    Button(
-      onClick = { onEvent(CalculatorUiEvent.OnSwapDirectionPress) },
-      content = { Text("Swap") }
+    Text(
+      text = state.conversionRateString,
     )
 
-    TextArea(state.to, onEvent)
+    TextArea(
+      modifier = textAreaModifier,
+      currencyInputUiState = state.from,
+      onEvent = onEvent
+    )
 
+    Button(
+      modifier = Modifier.align(Alignment.CenterHorizontally),
+      onClick = { onEvent(CalculatorUiEvent.OnSwapDirectionPress) },
+      content = {
+        Icon(
+          painter = painterResource(R.drawable.baseline_arrow_downward_24),
+          contentDescription = stringResource(R.string.btn_currency_swap)
+        )
+      },
+    )
+
+    TextArea(
+      modifier = textAreaModifier,
+      currencyInputUiState = state.to,
+      onEvent = onEvent
+    )
+
+    AnimatedVisibility(isRefreshing) {
+      LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+    }
   }
 }
 
@@ -188,42 +238,83 @@ fun TextArea(
 ) {
   val coroutineScope = rememberCoroutineScope()
   TextField(
-    modifier = modifier,
-    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-    value = currencyInputUiState.display,
-    onValueChange = { value ->
-      coroutineScope.launch {
-        currencyInputUiState.onTextChanged(value)
-      }
-    },
     isError = currencyInputUiState.error,
-    leadingIcon = if (currencyInputUiState.showCountryPicker) {
-      {
-        Button(
-          onClick = { onEvent(CalculatorUiEvent.OnShowCurrencySelectionPress) },
-          content = { Text("Pick") }
-        )
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+    leadingIcon = { TextAreaLeading(currencyInputUiState, onEvent) },
+    modifier = modifier,
+    textStyle = LocalTextStyle.current.copy(
+      textAlign = TextAlign.End,
+    ),
+    onValueChange = { value -> coroutineScope.launch { currencyInputUiState.onTextChanged(value) } },
+    value = currencyInputUiState.display,
+  )
+}
+
+@Composable
+private fun TextAreaLeading(
+  currencyInputUiState: CalculatorUiState.CurrencyInputUiState,
+  onEvent: (CalculatorUiEvent) -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Row(
+    horizontalArrangement = spacedBy(4.dp),
+    verticalAlignment = Alignment.CenterVertically,
+    modifier = modifier
+      .clip(RoundedCornerShape(4.dp))
+      .clickable(
+        enabled = currencyInputUiState.showCountryPicker,
+        onClickLabel = stringResource(R.string.btn_choose_currency)
+      ) {
+        onEvent(CalculatorUiEvent.OnShowCurrencySelectionPress)
       }
-    } else {
-      null
+  ) {
+    Spacer(Modifier.size(4.dp))
+
+    CountryFlag(
+      currencyInputUiState.currency,
+      modifier = modifier,
+    )
+    Text(currencyInputUiState.currency.value)
+
+    AnimatedVisibility(currencyInputUiState.showCountryPicker) {
+      Icon(
+        painter = painterResource(R.drawable.outline_arrow_drop_down_24),
+        contentDescription = null // decorative
+      )
     }
+  }
+}
+
+@Composable
+private fun CountryFlag(
+  currency: CurrencyCode,
+  size: Dp = 16.dp,
+  modifier: Modifier = Modifier,
+) {
+  AsyncImage(
+    modifier = modifier.size(size),
+    model = "https://flagsapi.com/${currency.value.take(2)}/flat/64.png",
+    contentDescription = currency.value,
   )
 }
 
 @Composable
 private fun CurrencyList(
   state: List<CurrencyCode>,
-  onEvent: (CalculatorUiEvent) -> Unit
+  onEvent: (CalculatorUiEvent) -> Unit,
+  modifier: Modifier = Modifier,
 ) {
-  LazyColumn {
-    items(state) { currencyCode ->
-      ListItem(
-        modifier = Modifier.clickable {
-          onEvent(CalculatorUiEvent.OnCurrencySelected(currencyCode))
-        },
-        headlineContent = { Text(currencyCode.value) },
-
-        )
+  Surface(modifier = modifier) {
+    LazyColumn {
+      items(state) { currencyCode ->
+        ListItem(
+          modifier = Modifier.clickable {
+            onEvent(CalculatorUiEvent.OnCurrencySelected(currencyCode))
+          },
+          headlineContent = { Text(currencyCode.value) },
+          leadingContent = { CountryFlag(currencyCode)}
+          )
+      }
     }
   }
 }

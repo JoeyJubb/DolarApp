@@ -1,23 +1,28 @@
 package com.joe.dolarApp.presentation.calculator
 
 import android.content.Context
-import androidx.core.text.isDigitsOnly
+import android.icu.text.DecimalFormatSymbols
+import android.icu.util.Currency
+import androidx.collection.LruCache
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.asSuccess
+import com.joe.dolarApp.util.errorHandling.flatMap
 import com.joe.dolarApp.util.errorHandling.map
-import com.joe.dolarApp.util.errorHandling.mapError
+import com.joe.dolarApp.util.errorHandling.onSuccess
 import com.joe.dolarApp.util.errorHandling.tryCatching
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.lang.RuntimeException
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.text.NumberFormat
-import java.util.Currency
+import java.util.Currency.getInstance
 import javax.inject.Inject
 
 interface CurrencyFormatter {
   fun format(bigDecimal: BigDecimal): Result<String, Throwable>
   fun parse(string: String): Result<BigDecimal, Throwable>
+
+  fun format(string: String): Result<String, Throwable> = parse(string).flatMap { format(it) }
 
 }
 
@@ -34,48 +39,63 @@ class CurrencyFormatterProviderImpl @Inject constructor(
     applicationContext.resources.configuration.locales[0]
   }
 
+  private val lruCache = LruCache<CurrencyCode, CurrencyFormatter>(maxSize = 2)
+
+
   override operator fun get(currencyCode: CurrencyCode): Result<CurrencyFormatter, Throwable> {
-    return when (currencyCode.value) {
-      "USDC" -> USDCFormatter().asSuccess()
-      else -> numberFormatter(currencyCode)
-    }
+    return lruCache[currencyCode]?.asSuccess()
+      ?: load(currencyCode).onSuccess { lruCache.put(currencyCode, it) }
+
   }
 
-  private fun numberFormatter(currencyCode: CurrencyCode) = tryCatching {
-    NumberFormat.getInstance(locale)
-      .apply {
-        currency = Currency.getInstance(currencyCode.value)!!
+  private fun load(currencyCode: CurrencyCode): Result<CurrencyFormatter, Throwable> {
+
+    val formatterCode = currencyCode.value.take(3)
+    val prefix = when (currencyCode.value) {
+      "USDc" -> "USDc$"
+      else -> Currency.getInstance(formatterCode).getSymbol(locale)
+    }
+    val decimalSeparator = DecimalFormatSymbols(locale).decimalSeparator
+
+    return tryCatching {
+      NumberFormat.getInstance(locale)
+        .apply {
+          this.currency = getInstance(formatterCode)!!
+        }
+    }
+      .map {
+        CurrencyFormatterImpl(
+          numberFormat = it,
+          prefix = prefix,
+          decimalSeparator = decimalSeparator
+        )
       }
   }
-    .map(::CurrencyFormatterImpl)
-}
 
-class USDCFormatter : CurrencyFormatter {
-
-  override fun format(bigDecimal: BigDecimal): Result<String, Throwable> = bigDecimal
-    .toPlainString()
-    .asSuccess()
-
-  override fun parse(string: String): Result<BigDecimal, Throwable> = tryCatching {
-    string.toBigDecimal()
-  }
 }
 
 class CurrencyFormatterImpl(
-  val numberFormat: NumberFormat,
+  private val numberFormat: NumberFormat,
+  private val prefix: String,
+  private val decimalSeparator: Char,
 ) : CurrencyFormatter {
 
   override fun format(bigDecimal: BigDecimal): Result<String, Throwable> = tryCatching {
-
-    numberFormat.format(
     bigDecimal
-  )
-  }.mapError {
-    RuntimeException("format(${numberFormat.currency}, $bigDecimal), ${it.message}", it )
+      .setScale(numberFormat.maximumFractionDigits, RoundingMode.HALF_DOWN)
+      .let(numberFormat::format)
+      .let {
+        "$prefix$it"
+      }
   }
 
   override fun parse(string: String): Result<BigDecimal, Throwable> = tryCatching {
-    numberFormat.parse(string)!!.toString().toBigDecimal()
+    string.filter {
+      it.isDigit() || it == decimalSeparator
+    }
+      .let(numberFormat::parse)!!
+      .toString()
+      .toBigDecimal()
   }
 
 

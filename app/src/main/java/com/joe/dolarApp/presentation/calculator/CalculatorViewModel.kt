@@ -41,7 +41,7 @@ class CalculatorViewModel @Inject constructor(
 ) : DolarAppViewModel<LoadState<CalculatorUiState, ErrorUiState>, CalculatorUiEvent>() {
 
   // could be injected
-  private val domesticCurrency = CurrencyCode("USDC")
+  private val domesticCurrency = CurrencyCode("USDc")
 
   private val isDataInvalid = MutableStateFlow(true)
 
@@ -68,7 +68,7 @@ class CalculatorViewModel @Inject constructor(
       .map {
         it.map { state ->
           CalculatorUiState.ConversionUiState(
-            conversionRateString = "${state.from.currency.value} -> ${state.to.currency.value}",
+            conversionRateString = state.rate,
             from = state.from,
             to = state.to,
           )
@@ -82,8 +82,8 @@ class CalculatorViewModel @Inject constructor(
     conversionState.startWithNull(),
     foreignCurrencies.startWithNull(),
     showCurrencySelection,
-    isDataInvalid
-  ) { conversionState, currencyList, showCurrencyList, isDataInvalid ->
+    exchangeRateLoadState,
+  ) { conversionState, currencyList, showCurrencyList, exchangeRateLoadState ->
 
     return@combine when (currencyList) {
       is Result.Failure -> Failure(currencyList.error)
@@ -95,7 +95,7 @@ class CalculatorViewModel @Inject constructor(
               conversion = conversionState.value,
               currencySelection = currencyList.value,
               isCurrencySelectionVisible = showCurrencyList,
-              isRefreshing = isDataInvalid,
+              isRefreshing = exchangeRateLoadState is Loading,
             )
           )
         }
@@ -115,12 +115,7 @@ class CalculatorViewModel @Inject constructor(
     repo
       .getExchangeRate(domestic = domesticCurrency, foreign = foreign)
       .onSuccess {
-        Timber.d("success -> $it")
         delegate.setExchangeRate(it)
-      }
-      .onFailure {
-
-        Timber.d("fail -> $it")
       }
       .let { result ->
         exchangeRateLoadState.update { result.asLoadState() }

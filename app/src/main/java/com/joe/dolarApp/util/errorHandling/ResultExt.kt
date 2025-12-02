@@ -65,6 +65,7 @@ fun <T> Result<T, Throwable>.getOrThrow() : T = when(this){
   is Result.Failure -> throw this.error
   is Result.Success -> this.value
 }
+fun <T, E> Result<T, E>.getOrDefault(default : T) : T = getOrNull() ?: default
 
 fun <T> tryCatching(function : () -> T) : Result<T, Throwable> =
   try {
