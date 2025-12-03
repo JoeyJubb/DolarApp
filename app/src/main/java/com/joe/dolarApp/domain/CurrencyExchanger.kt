@@ -21,7 +21,7 @@ interface CurrencyExchanger {
     invertRate: Boolean,
   ): Result<String, Throwable>
 
-  companion object{
+  companion object {
     /**
      * The maximum number of currency digits to display to the user.
      */

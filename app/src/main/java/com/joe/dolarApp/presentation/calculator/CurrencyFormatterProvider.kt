@@ -82,9 +82,12 @@ class CurrencyFormatterImpl(
 ) : CurrencyFormatter {
 
 
-  override fun toCurrencyString(string: String, roundToDecimals: Boolean): Result<String, Throwable> = tryCatching {
+  override fun toCurrencyString(
+    string: String,
+    roundToDecimals: Boolean
+  ): Result<String, Throwable> = tryCatching {
 
-    numberFormat.maximumFractionDigits = if(roundToDecimals) decimalPlaces else 10
+    numberFormat.maximumFractionDigits = if (roundToDecimals) decimalPlaces else 10
     numberFormat
       .format(string.toBigDecimal())
       .let { "$prefix$it" }

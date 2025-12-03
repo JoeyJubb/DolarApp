@@ -14,9 +14,10 @@ data class CalculatorUiState(
   val isRefreshing: Boolean,
 ) {
 
-  enum class ConversionMode{
+  enum class ConversionMode {
     /** Selling foreign **/
     ASK,
+
     /** Buying foreign **/
     BID
   }

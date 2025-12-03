@@ -127,9 +127,9 @@ class ConversionDelegateImpl @Inject constructor(
     refresh()
   }
 
-  private suspend fun refresh(){
+  private suspend fun refresh() {
     // The field the user typed in most recently is kept, the other is updated
-    when(lastUserUpdated.value){
+    when (lastUserUpdated.value) {
       LastUpdated.DOMESTIC -> onDomesticUpdated(text.value.domestic)
       LastUpdated.FOREIGN -> onForeignUpdated(text.value.foreign)
     }
@@ -144,9 +144,9 @@ class ConversionDelegateImpl @Inject constructor(
           domestic = text.withText(parsed),
           foreign = it.foreign.withText(
             calculateOther(
-            text = parsed,
-            invert = false
-          )
+              text = parsed,
+              invert = false
+            )
           )
         )
       }
@@ -162,9 +162,9 @@ class ConversionDelegateImpl @Inject constructor(
           foreign = text.withText(parsed),
           domestic = it.domestic.withText(
             calculateOther(
-            text = parsed,
-            invert = true
-          )
+              text = parsed,
+              invert = true
+            )
           )
         )
       }

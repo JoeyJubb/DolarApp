@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -192,15 +191,17 @@ fun Conversion(
   ) {
 
     ListItem(
-      modifier = Modifier.clickable{
+      modifier = Modifier.clickable {
         onEvent(CalculatorUiEvent.OnRefreshPress)
       },
       headlineContent = { Text(text = state.exchangeRateString) },
-      supportingContent = { Text (stringResource(R.string.rates_accurate_at, state.timestamp) ) },
-      trailingContent = {  Icon(
-        painter = painterResource(R.drawable.outline_refresh_24),
-        contentDescription = stringResource(R.string.btn_action_refresh)
-      ) }
+      supportingContent = { Text(stringResource(R.string.rates_accurate_at, state.timestamp)) },
+      trailingContent = {
+        Icon(
+          painter = painterResource(R.drawable.outline_refresh_24),
+          contentDescription = stringResource(R.string.btn_action_refresh)
+        )
+      }
     )
 
     val textAreaModifier = Modifier
