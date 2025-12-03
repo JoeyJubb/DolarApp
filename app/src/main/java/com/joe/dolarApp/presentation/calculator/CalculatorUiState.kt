@@ -1,5 +1,6 @@
 package com.joe.dolarApp.presentation.calculator
 
+import androidx.compose.ui.text.input.TextFieldValue
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.domain.ExchangeRate
 
@@ -24,9 +25,10 @@ data class CalculatorUiState(
     val exchangeRateString: String,
     val mode: ConversionMode,
     val exchangeRate: ExchangeRate,
-    val domestic: String,
-    val foreign: String,
+    val domestic: TextFieldValue,
+    val foreign: TextFieldValue,
     val inputError: Boolean,
+    val timestamp: String,
   )
 
   data class ErrorUiState(
@@ -40,11 +42,11 @@ sealed interface CalculatorUiEvent {
   object OnShowCurrencySelectionPress : CalculatorUiEvent
   object OnHideCurrencySelectionPress : CalculatorUiEvent
   object OnSwapDirectionPress : CalculatorUiEvent
-  object OnRetryPress : CalculatorUiEvent
+  object OnRefreshPress : CalculatorUiEvent
 
   data class OnCurrencySelected(val currencyCode: CurrencyCode) : CalculatorUiEvent
   data class OnBottomSheetVisibilityChanged(val isVisible: Boolean) : CalculatorUiEvent
 
-  data class OnDomesticTextUpdated(val text: String) : CalculatorUiEvent
-  data class OnForeignTextUpdated(val text: String) : CalculatorUiEvent
+  data class OnDomesticTextUpdated(val text: TextFieldValue) : CalculatorUiEvent
+  data class OnForeignTextUpdated(val text: TextFieldValue) : CalculatorUiEvent
 }

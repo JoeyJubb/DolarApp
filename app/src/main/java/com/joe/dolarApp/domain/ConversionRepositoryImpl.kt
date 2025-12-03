@@ -13,8 +13,10 @@ import com.joe.dolarApp.util.errorHandling.onSuccess
 import dagger.Reusable
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import timber.log.Timber
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 
 @Reusable
 class ConversionRepositoryImpl @Inject constructor(
@@ -82,6 +84,6 @@ class ConversionRepositoryImpl @Inject constructor(
     /**
      * If the local entry is at least this old, automatically try the network.
      */
-    private val maximumCacheAge = 1.days
+    private val maximumCacheAge = 2.hours
   }
 }

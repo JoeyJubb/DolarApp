@@ -1,11 +1,14 @@
 package com.joe.dolarApp.presentation.calculator
 
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import com.joe.dolarApp.R
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.domain.CurrencyExchanger
 import com.joe.dolarApp.domain.ExchangeRate
 import com.joe.dolarApp.presentation.calculator.CalculatorUiState.ConversionMode
 import com.joe.dolarApp.presentation.common.ResourceProvider
+import com.joe.dolarApp.presentation.common.TimeStampFormatter
 import com.joe.dolarApp.util.errorHandling.flatMap
 import com.joe.dolarApp.util.errorHandling.getOrDefault
 import com.joe.dolarApp.util.errorHandling.onFailure
@@ -27,8 +30,8 @@ interface ConversionDelegate {
 
   suspend fun setExchangeRate(exchangeRate: ExchangeRate)
 
-  suspend fun onDomesticUpdated(text: String)
-  suspend fun onForeignUpdated(text: String)
+  suspend fun onDomesticUpdated(text: TextFieldValue)
+  suspend fun onForeignUpdated(text: TextFieldValue)
 
 }
 
@@ -36,12 +39,31 @@ class ConversionDelegateImpl @Inject constructor(
   private val currencyExchanger: CurrencyExchanger,
   private val formatProvider: CurrencyFormatterProvider,
   private val resourceProvider: ResourceProvider,
+  private val timestampFormatter: TimeStampFormatter,
 ) : ConversionDelegate {
 
   private data class TextHolder(
-    val domestic: String = "0",
-    val foreign: String = "0",
+    val domestic: TextFieldValue = TextFieldValue("0"),
+    val foreign: TextFieldValue = TextFieldValue("0")
   )
+
+  /**
+   * Changes the text but maintains the selection
+   */
+  private fun TextFieldValue.withText(text: String) =
+    TextFieldValue(
+      text = text,
+      selection = TextRange(
+        start = if (selection.length > 0) text.indexOfFirst { it.isDigit() } else text.length,
+        end = text.length
+      )
+    )
+
+  enum class LastUpdated {
+    DOMESTIC, FOREIGN
+  }
+
+  private val lastUserUpdated = MutableStateFlow<LastUpdated>(LastUpdated.DOMESTIC)
 
   private val mode = MutableStateFlow(ConversionMode.BID)
   private val exchangeRate = MutableStateFlow<ExchangeRate?>(null)
@@ -57,14 +79,20 @@ class ConversionDelegateImpl @Inject constructor(
     CalculatorUiState.ConversionUiState(
       mode = mode,
       exchangeRate = exchangeRate,
-      domestic = format(text.domestic, exchangeRate.domestic),
-      foreign = format(text.foreign, exchangeRate.foreign),
+      domestic = text.domestic.withText(
+        text = format(text.domestic.text, exchangeRate.domestic)
+      ),
+      foreign = text.foreign.withText(
+        format(text.foreign.text, exchangeRate.foreign)
+      ),
       inputError = exchangeError,
       exchangeRateString = resourceProvider.getString(
         R.string.conversion_string,
         format("1", exchangeRate.domestic, false),
         format(getCurrentRate(), exchangeRate.foreign, false),
-      )
+      ),
+      timestamp = timestampFormatter(exchangeRate.timeStamp)
+        .getOrDefault(exchangeRate.timeStamp.toString())
     )
   }
 
@@ -82,11 +110,20 @@ class ConversionDelegateImpl @Inject constructor(
       .flatMap { it.parseTypedInput(string) }
       .getOrDefault(string)
 
-  override suspend fun flip() = mode.update {
-    when (it) {
-      ConversionMode.ASK -> ConversionMode.BID
-      ConversionMode.BID -> ConversionMode.ASK
+  override suspend fun flip() {
+    mode.update {
+      when (it) {
+        ConversionMode.ASK -> ConversionMode.BID
+        ConversionMode.BID -> ConversionMode.ASK
+      }
     }
+
+    // The field the user typed in most recently is kept, the other is updated
+    when(lastUserUpdated.value){
+      LastUpdated.DOMESTIC -> onDomesticUpdated(text.value.domestic)
+      LastUpdated.FOREIGN -> onForeignUpdated(text.value.foreign)
+    }
+
   }
 
   override suspend fun setExchangeRate(exchangeRate: ExchangeRate) {
@@ -95,30 +132,36 @@ class ConversionDelegateImpl @Inject constructor(
     }
   }
 
-  override suspend fun onDomesticUpdated(text: String) {
+  override suspend fun onDomesticUpdated(text: TextFieldValue) {
+    lastUserUpdated.update { LastUpdated.DOMESTIC }
     exchangeRate.value?.let { exchangeRate ->
       this.text.update {
-        val parsed = parseTypedInput(text, exchangeRate.domestic)
+        val parsed = parseTypedInput(text.text, exchangeRate.domestic)
         TextHolder(
-          domestic = parsed,
-          foreign = calculateOther(
+          domestic = text.withText(parsed),
+          foreign = it.foreign.withText(
+            calculateOther(
             text = parsed,
-            invert = mode.value == ConversionMode.ASK
+            invert = false
+          )
           )
         )
       }
     }
   }
 
-  override suspend fun onForeignUpdated(text: String) {
+  override suspend fun onForeignUpdated(text: TextFieldValue) {
+    lastUserUpdated.update { LastUpdated.FOREIGN }
     exchangeRate.value?.let { exchangeRate ->
       this.text.update {
-        val parsed = parseTypedInput(text, exchangeRate.foreign)
+        val parsed = parseTypedInput(text.text, exchangeRate.foreign)
         TextHolder(
-          foreign = parsed,
-          domestic = calculateOther(
+          foreign = text.withText(parsed),
+          domestic = it.domestic.withText(
+            calculateOther(
             text = parsed,
-            invert = mode.value == ConversionMode.BID
+            invert = true
+          )
           )
         )
       }

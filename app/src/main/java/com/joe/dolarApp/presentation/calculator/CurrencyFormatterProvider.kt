@@ -93,6 +93,7 @@ class CurrencyFormatterImpl(
     string
       .removePrefix(prefix)
       .filter { it.isDigit() }
+      .ifBlank { "0" }
       .toBigDecimal()
       .setScale(decimalPlaces)
       .divide(BigDecimal.TEN.pow(decimalPlaces))

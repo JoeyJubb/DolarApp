@@ -80,7 +80,7 @@ interface DataSourceModule {
 
   @Singleton
   @Binds
-  fun bindNetworkDataSource(impl: FakeNetworkDataSource): NetworkDataSource
+  fun bindNetworkDataSource(impl: DelegatingNetworkDataSource): NetworkDataSource
 
   @Singleton
   @Binds

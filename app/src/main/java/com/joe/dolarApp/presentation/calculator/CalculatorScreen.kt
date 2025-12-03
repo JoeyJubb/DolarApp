@@ -55,16 +55,13 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
@@ -199,12 +196,18 @@ fun Conversion(
 
     val textAreaModifier = Modifier.fillMaxWidth()
 
-    Text(
-      text = state.exchangeRateString
+    ListItem(
+      modifier = Modifier.clickable{
+        onEvent(CalculatorUiEvent.OnRefreshPress)
+      },
+      headlineContent = { Text(text = state.exchangeRateString) },
+      supportingContent = { Text (stringResource(R.string.rates_accurate_at, state.timestamp) ) },
+      trailingContent = {  Icon(
+        painter = painterResource(R.drawable.outline_refresh_24),
+        contentDescription = stringResource(R.string.btn_action_refresh)
+      ) }
     )
-    Text(
-      text = stringResource(R.string.rates_accurate_at, state.exchangeRate.timeStamp),
-    )
+
 
     @Composable
     fun domestic() {
@@ -266,16 +269,14 @@ fun Conversion(
 
 @Composable
 fun TextArea(
-  value: String,
-  onValueChange: (String) -> Unit,
+  value: TextFieldValue,
+  onValueChange: (TextFieldValue) -> Unit,
   currencyCode: CurrencyCode,
   onEvent: (CalculatorUiEvent) -> Unit,
   modifier: Modifier = Modifier,
   showCountryPicker: Boolean = false,
   isError: Boolean,
 ) {
-  //TODO figure out how to allow for Select All
-
   TextField(
     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
     leadingIcon = {
@@ -291,12 +292,9 @@ fun TextArea(
     ),
     isError = isError,
     onValueChange = {
-      onValueChange(it.text)
+      onValueChange(it)
     },
-    value = TextFieldValue(
-      text = value,
-      selection = TextRange(value.length)
-    )
+    value = value
   )
 }
 
@@ -411,7 +409,7 @@ private fun ErrorContent(
 
     if (error.canRetry) {
       Button(
-        onClick = { onEvent(CalculatorUiEvent.OnRetryPress) },
+        onClick = { onEvent(CalculatorUiEvent.OnRefreshPress) },
         content = { Text(stringResource(R.string.btn_action_retry)) },
       )
     }

@@ -25,6 +25,7 @@ import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isSameInstanceAs
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.nanoseconds
 
 class ConversionRepositoryImplTest {
@@ -185,7 +186,7 @@ class ConversionRepositoryImplTest {
   }
 
   private companion object {
-    private val maximumCacheAge = 1.days
+    private val maximumCacheAge = 2.hours
     private val domestic = CurrencyCode("domestic")
     private val foreign = CurrencyCode("foreign")
   }
