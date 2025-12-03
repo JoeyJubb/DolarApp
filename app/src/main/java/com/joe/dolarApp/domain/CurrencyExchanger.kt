@@ -3,6 +3,7 @@ package com.joe.dolarApp.domain
 import com.joe.dolarApp.util.DispatcherProvider
 import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.coTryCatching
+import com.joe.dolarApp.util.errorHandling.onFailure
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.math.BigDecimal
@@ -19,6 +20,13 @@ interface CurrencyExchanger {
     rate: String,
     invertRate: Boolean,
   ): Result<String, Throwable>
+
+  companion object{
+    /**
+     * The maximum number of currency digits to display to the user.
+     */
+    const val PRECISION = 500
+  }
 }
 
 class CurrencyExchangerImpl @Inject constructor(
@@ -34,7 +42,7 @@ class CurrencyExchangerImpl @Inject constructor(
       .parse()
       .let {
         val multiplicand = rate.toBigDecimal()
-        if (invertRate) it.divide(multiplicand, MathContext.DECIMAL64)
+        if (invertRate) it.divide(multiplicand, MathContext.DECIMAL128)
         else it.multiply(multiplicand)
       }
       .toPlainString()
@@ -45,6 +53,7 @@ class CurrencyExchangerImpl @Inject constructor(
       coTryCatching {
         function()
       }
+        .onFailure { Timber.e(it) }
     }
 
   private fun String.parse(): BigDecimal = when {

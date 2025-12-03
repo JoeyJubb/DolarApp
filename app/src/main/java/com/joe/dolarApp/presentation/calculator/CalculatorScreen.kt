@@ -89,9 +89,6 @@ fun CalculatorScreen(
   val onEvent = viewModel::onEvent
 
   val childModifier = modifier
-    .imePadding()
-    .navigationBarsPadding()
-    .padding(horizontal = 16.dp, vertical = 24.dp)
     .fillMaxSize()
 
   when (val state = uiState) {
@@ -160,7 +157,7 @@ private fun CalculatorContent(
   }
 
   BottomSheetScaffold(
-    modifier = modifier.fillMaxSize(),
+    modifier = modifier,
     scaffoldState = scaffoldState,
     snackbarHost = { SnackbarHost(snackbarHostState) },
     topBar = { CalculatorTopBar(openDrawer) },
@@ -172,12 +169,11 @@ private fun CalculatorContent(
       )
     }
   ) { paddingValues ->
-
     Conversion(
       state = uiState.conversion,
       isRefreshing = uiState.isRefreshing,
       onEvent = onEvent,
-      modifier = modifier.padding(paddingValues)
+      modifier = Modifier.padding(paddingValues)
     )
   }
 }
@@ -190,11 +186,10 @@ fun Conversion(
   modifier: Modifier = Modifier,
 ) {
   Column(
-    modifier = modifier.verticalScroll(rememberScrollState()),
-    verticalArrangement = spacedBy(8.dp),
+    modifier = modifier
+      .verticalScroll(rememberScrollState()),
+    verticalArrangement = spacedBy(16.dp),
   ) {
-
-    val textAreaModifier = Modifier.fillMaxWidth()
 
     ListItem(
       modifier = Modifier.clickable{
@@ -208,6 +203,9 @@ fun Conversion(
       ) }
     )
 
+    val textAreaModifier = Modifier
+      .padding(horizontal = 16.dp)
+      .fillMaxWidth()
 
     @Composable
     fun domestic() {

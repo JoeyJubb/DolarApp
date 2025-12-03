@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import androidx.collection.LruCache
 import com.joe.dolarApp.domain.CurrencyCode
+import com.joe.dolarApp.domain.CurrencyExchanger
 import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.asSuccess
 import com.joe.dolarApp.util.errorHandling.onSuccess
@@ -93,6 +94,7 @@ class CurrencyFormatterImpl(
     string
       .removePrefix(prefix)
       .filter { it.isDigit() }
+      .take(CurrencyExchanger.PRECISION)
       .ifBlank { "0" }
       .toBigDecimal()
       .setScale(decimalPlaces)

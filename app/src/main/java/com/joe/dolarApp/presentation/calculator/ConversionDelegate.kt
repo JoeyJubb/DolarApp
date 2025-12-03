@@ -117,18 +117,21 @@ class ConversionDelegateImpl @Inject constructor(
         ConversionMode.BID -> ConversionMode.ASK
       }
     }
-
-    // The field the user typed in most recently is kept, the other is updated
-    when(lastUserUpdated.value){
-      LastUpdated.DOMESTIC -> onDomesticUpdated(text.value.domestic)
-      LastUpdated.FOREIGN -> onForeignUpdated(text.value.foreign)
-    }
-
+    refresh()
   }
 
   override suspend fun setExchangeRate(exchangeRate: ExchangeRate) {
     this.exchangeRate.update {
       exchangeRate
+    }
+    refresh()
+  }
+
+  private suspend fun refresh(){
+    // The field the user typed in most recently is kept, the other is updated
+    when(lastUserUpdated.value){
+      LastUpdated.DOMESTIC -> onDomesticUpdated(text.value.domestic)
+      LastUpdated.FOREIGN -> onForeignUpdated(text.value.foreign)
     }
   }
 
