@@ -54,6 +54,7 @@ I added the following extra features that made sense to me:
 ### Next Steps
 - Unit test coverage! I wrote some as a demonstration of how I like to write tests, but more coverage is needed
 - Local cache for country list
+- The "Loading" and "Error" UI states are a bit rough
 
 ## Logic Notes
 ### Conversion Flow
