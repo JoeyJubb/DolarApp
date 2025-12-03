@@ -25,6 +25,7 @@ import com.joe.dolarApp.data.source.local.ExchangeRateDatabase
 import com.joe.dolarApp.data.source.local.LocalDataStore
 import com.joe.dolarApp.data.source.local.LocalDataStoreImpl
 import com.joe.dolarApp.data.source.network.DelegatingNetworkDataSource
+import com.joe.dolarApp.data.source.network.FakeNetworkDataSource
 import com.joe.dolarApp.data.source.network.NetworkDataSource
 import com.joe.dolarApp.domain.ConversionRepository
 import com.joe.dolarApp.domain.ConversionRepositoryImpl

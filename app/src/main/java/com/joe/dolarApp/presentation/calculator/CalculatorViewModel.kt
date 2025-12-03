@@ -13,7 +13,6 @@ import com.joe.dolarApp.util.LoadState.Success
 import com.joe.dolarApp.util.WhileUiSubscribed
 import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.asLoadState
-import com.joe.dolarApp.util.errorHandling.map
 import com.joe.dolarApp.util.errorHandling.mapError
 import com.joe.dolarApp.util.errorHandling.onSuccess
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,6 +25,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import timber.log.Timber
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 
@@ -42,6 +43,7 @@ class CalculatorViewModel @Inject constructor(
   // could be injected
   private val domesticCurrency = CurrencyCode("USDC")
 
+  private val isFirstLoad = AtomicBoolean(true)
   private val isDataInvalid = MutableStateFlow(true)
 
   private val showCurrencySelection = MutableStateFlow(false)
@@ -50,6 +52,7 @@ class CalculatorViewModel @Inject constructor(
     isDataInvalid
       .filter { it }
       .map {
+        Timber.d("refreshing!")
         repo.getAvailableForeignCodes(domesticCurrency)
           .mapError {
             errorStateProvider.createErrorState(
@@ -62,47 +65,31 @@ class CalculatorViewModel @Inject constructor(
   private val exchangeRateLoadState =
     MutableStateFlow<LoadState<ExchangeRate, ErrorUiState>>(Loading)
 
-  private val conversionState: Flow<Result<CalculatorUiState.ConversionUiState, ErrorUiState>> =
+  private val conversionState: Flow<CalculatorUiState.ConversionUiState> =
     delegate.observe()
-      .map {
-        it.map { state ->
-          CalculatorUiState.ConversionUiState(
-            conversionRateString = state.rate,
-            timestamp = state.timeStamp,
-            from = state.from,
-            to = state.to,
-          )
-        }
-          .mapError {
-            errorStateProvider.createGenericError()
-          }
-      }
 
   override val uiState: StateFlow<LoadState<CalculatorUiState, ErrorUiState>> = combine(
+    isDataInvalid,
     conversionState.startWithNull(),
     foreignCurrencies.startWithNull(),
     showCurrencySelection,
     exchangeRateLoadState,
-  ) { conversionState, currencyList, showCurrencyList, exchangeRateLoadState ->
+  ) { isDataInvalid, conversionState, currencyList, showCurrencyList, exchangeRateLoadState ->
 
     return@combine when (currencyList) {
       is Result.Failure -> Failure(currencyList.error)
       is Result.Success -> when (exchangeRateLoadState) {
         is Failure -> Failure(exchangeRateLoadState.error)
         else -> when (conversionState) {
-          is Result.Failure -> Failure(conversionState.error)
-          is Result.Success -> {
-            Success(
-              CalculatorUiState(
-                conversion = conversionState.value,
-                currencySelection = currencyList.value,
-                isCurrencySelectionVisible = showCurrencyList,
-                isRefreshing = exchangeRateLoadState is Loading,
-              )
-            )
-          }
-
           null -> Loading
+          else -> Success(
+            CalculatorUiState(
+              conversion = conversionState,
+              currencySelection = currencyList.value,
+              isCurrencySelectionVisible = showCurrencyList,
+              isRefreshing = isDataInvalid || exchangeRateLoadState is Loading,
+            )
+          )
         }
       }
 
@@ -118,7 +105,11 @@ class CalculatorViewModel @Inject constructor(
     showCurrencySelection.update { false }
     exchangeRateLoadState.update { Loading }
     repo
-      .getExchangeRate(domestic = domesticCurrency, foreign = foreign)
+      .getExchangeRate(
+        domestic = domesticCurrency,
+        foreign = foreign,
+        forceRefresh = !isFirstLoad.getAndSet(false)
+      )
       .onSuccess {
         delegate.setExchangeRate(it)
       }
@@ -132,11 +123,13 @@ class CalculatorViewModel @Inject constructor(
 
   override suspend fun handleEvent(event: CalculatorUiEvent) = when (event) {
     CalculatorUiEvent.OnHideCurrencySelectionPress -> showCurrencySelection.update { false }
-    CalculatorUiEvent.OnRetryPress -> retry()
+    CalculatorUiEvent.OnRefreshPress -> retry()
     CalculatorUiEvent.OnShowCurrencySelectionPress -> showCurrencySelection.update { true }
     CalculatorUiEvent.OnSwapDirectionPress -> delegate.flip()
     is CalculatorUiEvent.OnCurrencySelected -> onCurrencySelected(event.currencyCode)
     is CalculatorUiEvent.OnBottomSheetVisibilityChanged -> showCurrencySelection.update { event.isVisible }
+    is CalculatorUiEvent.OnDomesticTextUpdated -> delegate.onDomesticUpdated(event.text)
+    is CalculatorUiEvent.OnForeignTextUpdated -> delegate.onForeignUpdated(event.text)
   }
 
   private fun retry() = isDataInvalid.update { true }

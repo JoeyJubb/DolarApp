@@ -1,57 +1,37 @@
 package com.joe.dolarApp.presentation.calculator
 
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import com.joe.dolarApp.R
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.domain.CurrencyExchanger
 import com.joe.dolarApp.domain.ExchangeRate
-import com.joe.dolarApp.presentation.calculator.CalculatorUiState.CurrencyInputUiState
+import com.joe.dolarApp.presentation.calculator.CalculatorUiState.ConversionMode
 import com.joe.dolarApp.presentation.common.ResourceProvider
 import com.joe.dolarApp.presentation.common.TimeStampFormatter
-import com.joe.dolarApp.util.errorHandling.Result
-import com.joe.dolarApp.util.errorHandling.asSuccess
 import com.joe.dolarApp.util.errorHandling.flatMap
 import com.joe.dolarApp.util.errorHandling.getOrDefault
-import com.joe.dolarApp.util.errorHandling.getOrNull
-import com.joe.dolarApp.util.errorHandling.getOrThrow
-import com.joe.dolarApp.util.errorHandling.isFailure
 import com.joe.dolarApp.util.errorHandling.onFailure
-import com.joe.dolarApp.util.errorHandling.onSuccess
-import com.joe.dolarApp.util.errorHandling.tryCatching
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.updateAndGet
-import timber.log.Timber
 import javax.inject.Inject
-
-
-/**
- * ViewModel for the task list screen.
- */
 
 interface ConversionDelegate {
 
-  data class State(
-    val from: CurrencyInputUiState,
-    val to: CurrencyInputUiState,
-    val rate: String,
-    val timeStamp: String,
-  )
-
-  fun observe(): Flow<Result<State, Unit>>
+  fun observe(): Flow<CalculatorUiState.ConversionUiState>
 
   /**
-   * The previous "from" currency becomes the new "to" currency and its value is kept.
-   * The previous "to" currency becomes the new "from" currency and its value is recalculated.
-   *
-   * It's done this way because the designs have "from" at the top and "to" at the bottom, and a
-   * down arrow to swap them.
+   * swap between BID and ASK
    */
   suspend fun flip()
 
   suspend fun setExchangeRate(exchangeRate: ExchangeRate)
+
+  suspend fun onDomesticUpdated(text: TextFieldValue)
+  suspend fun onForeignUpdated(text: TextFieldValue)
 
 }
 
@@ -59,196 +39,158 @@ class ConversionDelegateImpl @Inject constructor(
   private val currencyExchanger: CurrencyExchanger,
   private val formatProvider: CurrencyFormatterProvider,
   private val resourceProvider: ResourceProvider,
-  private val timeStampFormatter: TimeStampFormatter,
+  private val timestampFormatter: TimeStampFormatter,
 ) : ConversionDelegate {
 
-  private data class TextDisplay(
-    val text: String = "1",
-    val error: Boolean = false,
+  private data class TextHolder(
+    val domestic: TextFieldValue = TextFieldValue("0"),
+    val foreign: TextFieldValue = TextFieldValue("0")
   )
 
+  /**
+   * Changes the text but maintains the selection
+   */
+  private fun TextFieldValue.withText(text: String) =
+    TextFieldValue(
+      text = text,
+      selection = TextRange(
+        start = if (selection.length > 0) text.indexOfFirst { it.isDigit() } else text.length,
+        end = text.length
+      )
+    )
+
+  enum class LastUpdated {
+    DOMESTIC, FOREIGN
+  }
+
+  private val lastUserUpdated = MutableStateFlow<LastUpdated>(LastUpdated.DOMESTIC)
+
+  private val mode = MutableStateFlow(ConversionMode.BID)
   private val exchangeRate = MutableStateFlow<ExchangeRate?>(null)
-  private val isDomesticToForeign = MutableStateFlow(true)
+  private val exchangeError = MutableStateFlow(false)
+  private val text = MutableStateFlow<TextHolder>(TextHolder())
 
-  private val domesticDisplay = MutableStateFlow(TextDisplay())
+  override fun observe(): Flow<CalculatorUiState.ConversionUiState> = combine(
+    mode,
+    exchangeRate.filterNotNull(),
+    exchangeError,
+    text,
+  ) { mode, exchangeRate, exchangeError, text ->
+    CalculatorUiState.ConversionUiState(
+      mode = mode,
+      exchangeRate = exchangeRate,
+      domestic = text.domestic.withText(
+        text = format(text.domestic.text, exchangeRate.domestic)
+      ),
+      foreign = text.foreign.withText(
+        format(text.foreign.text, exchangeRate.foreign)
+      ),
+      inputError = exchangeError,
+      exchangeRateString = resourceProvider.getString(
+        R.string.conversion_string,
+        format("1", exchangeRate.domestic, false),
+        format(getCurrentRate(), exchangeRate.foreign, false),
+      ),
+      timestamp = timestampFormatter(exchangeRate.timeStamp)
+        .getOrDefault(exchangeRate.timeStamp.toString())
+    )
+  }
 
-  private val foreignDisplay = MutableStateFlow<TextDisplay>(TextDisplay())
+  private fun format(
+    string: String,
+    currencyCode: CurrencyCode,
+    roundToDecimals: Boolean = true,
+  ): String =
+    formatProvider[currencyCode]
+      .flatMap { it.toCurrencyString(string, roundToDecimals) }
+      .getOrDefault(string)
+
+  private fun parseTypedInput(string: String, code: CurrencyCode): String =
+    formatProvider[code]
+      .flatMap { it.parseTypedInput(string) }
+      .getOrDefault(string)
 
   override suspend fun flip() {
-    val result = isDomesticToForeign.updateAndGet { !it }
-    refresh(!result) // want the top value to transfer to the bottom one
+    mode.update {
+      when (it) {
+        ConversionMode.ASK -> ConversionMode.BID
+        ConversionMode.BID -> ConversionMode.ASK
+      }
+    }
+
+    // The field the user typed in most recently is kept, the other is updated
+    when(lastUserUpdated.value){
+      LastUpdated.DOMESTIC -> onDomesticUpdated(text.value.domestic)
+      LastUpdated.FOREIGN -> onForeignUpdated(text.value.foreign)
+    }
+
   }
 
   override suspend fun setExchangeRate(exchangeRate: ExchangeRate) {
-    this.exchangeRate.update { exchangeRate }
-    refresh(isDomesticToForeign.value)
-  }
-
-  override fun observe(): Flow<Result<ConversionDelegate.State, Unit>> =
-    combine(
-      isDomesticToForeign,
-      exchangeRate.filterNotNull(),
-      domesticDisplay,
-      foreignDisplay,
-    ) { isDomesticToForeign, exchangeRate, domesticDisplay, foreignDisplay ->
-
-      val rate = if (isDomesticToForeign) exchangeRate.bid else exchangeRate.ask
-
-      val domestic = CurrencyInputUiState(
-        currency = exchangeRate.domestic,
-        display = domesticDisplay.text,
-        error = domesticDisplay.error,
-        showCountryPicker = false,
-        onTextChanged = {
-          onDomesticChanged(it)
-          calculateForeign(
-            value = it,
-            rate = rate,
-            domestic = exchangeRate.domestic
-          )
-        },
-      )
-
-      val foreign = CurrencyInputUiState(
-        currency = exchangeRate.foreign,
-        display = foreignDisplay.text,
-        error = foreignDisplay.error,
-        showCountryPicker = true,
-        onTextChanged = {
-          onForeignChanged(it)
-          calculateDomestic(
-            value = it,
-            rate = rate,
-            foreign = exchangeRate.foreign
-          )
-        },
-      )
-
-      val (from, to) = if (isDomesticToForeign) domestic to foreign else foreign to domestic
-
-      ConversionDelegate.State(
-        from = from,
-        to = to,
-        rate = getRateString(isDomesticToForeign, from.currency, to.currency, rate),
-        timeStamp = timeStampFormatter(exchangeRate.timeStamp)
-          .getOrDefault(exchangeRate.timeStamp.toString()),
-      ).asSuccess()
-    }
-
-  private fun getRateString(
-    isDomesticToForeign: Boolean,
-    from: CurrencyCode,
-    to: CurrencyCode,
-    rate: String
-  ): String = tryCatching {
-
-    val fromRate = if (isDomesticToForeign) "1" else rate
-    val toRate = if (isDomesticToForeign) rate else "1"
-
-    resourceProvider.getString(
-      R.string.conversion_string,
-      formatProvider[from].flatMap { it.format(fromRate) }.getOrThrow(),
-      formatProvider[to].flatMap { it.format(toRate) }.getOrThrow(),
-    )
-  }.getOrDefault("1 ${from.value} = $rate ${to.value}")
-
-  private suspend fun calculateForeign(
-    value: String,
-    rate: String,
-    domestic: CurrencyCode
-  ) {
-    currencyExchanger.doExchange(
-      value = value,
-      rate = rate,
-      from = domestic,
-      invertRate = false
-    ).onSuccess { result ->
-      onForeignChanged(result)
-    }.onFailure {
-      Timber.e(it)
-      domesticDisplay.update { prev -> prev.copy(error = true) }
+    this.exchangeRate.update {
+      exchangeRate
     }
   }
 
-  private suspend fun calculateDomestic(
-    value: String,
-    rate: String,
-    foreign: CurrencyCode,
-  ) {
-    currencyExchanger.doExchange(
-      value = value,
-      rate = rate,
-      from = foreign,
-      invertRate = true
-    ).onSuccess { result ->
-      onDomesticChanged(result)
-    }.onFailure {
-      Timber.e(it)
-      foreignDisplay.update { prev -> prev.copy(error = true) }
-    }
-  }
-
-  private fun onDomesticChanged(string: String) {
-    domesticDisplay.update {
-      cleanupInput(string) { domestic }
-    }
-  }
-
-  private fun cleanupInput(
-    string: String,
-    currencyCode: ExchangeRate.() -> CurrencyCode
-  ): TextDisplay = exchangeRate.value?.let {
-    formatProvider[currencyCode(it)].flatMap { formatter ->
-      formatter.parse(string).flatMap { decimal -> formatter.format(decimal) }
-    }.let { result ->
-      TextDisplay(
-        text = result.getOrNull() ?: string,
-        error = result.isFailure(),
-      )
-    }
-  } ?: TextDisplay(string)
-
-  private fun onForeignChanged(string: String) {
-    foreignDisplay.update {
-      cleanupInput(string) { foreign }
-    }
-  }
-
-  private suspend fun refresh(
-    isDomesticToForeign: Boolean,
-  ) {
+  override suspend fun onDomesticUpdated(text: TextFieldValue) {
+    lastUserUpdated.update { LastUpdated.DOMESTIC }
     exchangeRate.value?.let { exchangeRate ->
-      val rate = if (isDomesticToForeign) exchangeRate.bid else exchangeRate.ask
-
-      if (isDomesticToForeign) {
-        refreshDomestic()
-
-        calculateForeign(
-          value = domesticDisplay.value.text,
-          rate = rate,
-          domestic = exchangeRate.domestic
-        )
-      } else {
-        refreshForeign()
-
-        calculateDomestic(
-          value = foreignDisplay.value.text,
-          rate = rate,
-          foreign = exchangeRate.foreign
+      this.text.update {
+        val parsed = parseTypedInput(text.text, exchangeRate.domestic)
+        TextHolder(
+          domestic = text.withText(parsed),
+          foreign = it.foreign.withText(
+            calculateOther(
+            text = parsed,
+            invert = false
+          )
+          )
         )
       }
     }
   }
 
-  private fun refreshDomestic() {
-    domesticDisplay.update { prev ->
-      cleanupInput(prev.text) { domestic }
+  override suspend fun onForeignUpdated(text: TextFieldValue) {
+    lastUserUpdated.update { LastUpdated.FOREIGN }
+    exchangeRate.value?.let { exchangeRate ->
+      this.text.update {
+        val parsed = parseTypedInput(text.text, exchangeRate.foreign)
+        TextHolder(
+          foreign = text.withText(parsed),
+          domestic = it.domestic.withText(
+            calculateOther(
+            text = parsed,
+            invert = true
+          )
+          )
+        )
+      }
     }
   }
 
-  private fun refreshForeign() {
-    foreignDisplay.update { prev ->
-      cleanupInput(prev.text) { foreign }
+  private val ExchangeRate.rate: String
+    get() =
+      when (mode.value) {
+        ConversionMode.ASK -> ask
+        ConversionMode.BID -> bid
+      }
+
+  private fun getCurrentRate(): String = exchangeRate.value?.rate ?: "1"
+
+  private suspend fun calculateOther(
+    text: String,
+    invert: Boolean,
+  ): String {
+    exchangeError.update { false }
+    return currencyExchanger.doExchange(
+      value = text,
+      rate = getCurrentRate(),
+      invertRate = invert
+    ).onFailure {
+      exchangeError.update { true }
     }
+      .getOrDefault("")
   }
+
+
 }

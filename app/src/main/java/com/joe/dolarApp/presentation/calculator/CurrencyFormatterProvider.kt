@@ -1,29 +1,27 @@
 package com.joe.dolarApp.presentation.calculator
 
 import android.content.Context
-import android.icu.text.DecimalFormatSymbols
-import android.icu.util.Currency
+import android.os.Build
 import androidx.collection.LruCache
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.asSuccess
-import com.joe.dolarApp.util.errorHandling.flatMap
-import com.joe.dolarApp.util.errorHandling.map
 import com.joe.dolarApp.util.errorHandling.onSuccess
 import com.joe.dolarApp.util.errorHandling.tryCatching
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.text.NumberFormat
-import java.util.Currency.getInstance
+import java.util.Currency
 import javax.inject.Inject
 
 interface CurrencyFormatter {
-  fun format(bigDecimal: BigDecimal): Result<String, Throwable>
-  fun parse(string: String): Result<BigDecimal, Throwable>
 
-  fun format(string: String): Result<String, Throwable> = parse(string).flatMap { format(it) }
+  fun toCurrencyString(
+    string: String,
+    roundToDecimals: Boolean = true,
+  ): Result<String, Throwable>
 
+  fun parseTypedInput(string: String): Result<String, Throwable>
 }
 
 interface CurrencyFormatterProvider {
@@ -36,11 +34,14 @@ class CurrencyFormatterProviderImpl @Inject constructor(
 ) : CurrencyFormatterProvider {
 
   private val locale by lazy {
-    applicationContext.resources.configuration.locales[0]
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      applicationContext.resources.configuration.locales[0]
+    } else {
+      applicationContext.resources.configuration.locale
+    }
   }
 
   private val lruCache = LruCache<CurrencyCode, CurrencyFormatter>(maxSize = 2)
-
 
   override operator fun get(currencyCode: CurrencyCode): Result<CurrencyFormatter, Throwable> {
     return lruCache[currencyCode]?.asSuccess()
@@ -48,55 +49,54 @@ class CurrencyFormatterProviderImpl @Inject constructor(
 
   }
 
-  private fun load(currencyCode: CurrencyCode): Result<CurrencyFormatter, Throwable> {
+  private fun load(currencyCode: CurrencyCode): Result<CurrencyFormatter, Throwable> = tryCatching {
 
-    val formatterCode = currencyCode.value.take(3)
+    val baseCurrencyCode = currencyCode.value.take(3)
+
+    val currency = Currency.getInstance(baseCurrencyCode)!!
+    val decimalPlaces = currency.defaultFractionDigits
+
     val prefix = when (currencyCode.value) {
       "USDC" -> "USDC$"
-      else -> Currency.getInstance(formatterCode).getSymbol(locale)
+      else -> currency.getSymbol(locale)
     }
-    val decimalSeparator = DecimalFormatSymbols(locale).decimalSeparator
 
-    return tryCatching {
-      NumberFormat.getInstance(locale)
+    CurrencyFormatterImpl(
+      numberFormat = NumberFormat.getInstance(locale)
         .apply {
-          this.currency = getInstance(formatterCode)!!
-        }
-    }
-      .map {
-        CurrencyFormatterImpl(
-          numberFormat = it,
-          prefix = prefix,
-          decimalSeparator = decimalSeparator
-        )
-      }
+          this.currency = currency
+          minimumFractionDigits = decimalPlaces
+          maximumFractionDigits = decimalPlaces
+        },
+      prefix = prefix,
+      decimalPlaces = decimalPlaces,
+    )
   }
-
 }
 
 class CurrencyFormatterImpl(
   private val numberFormat: NumberFormat,
+  private val decimalPlaces: Int,
   private val prefix: String,
-  private val decimalSeparator: Char,
 ) : CurrencyFormatter {
 
-  override fun format(bigDecimal: BigDecimal): Result<String, Throwable> = tryCatching {
-    bigDecimal
-      .setScale(numberFormat.maximumFractionDigits, RoundingMode.HALF_DOWN)
-      .let(numberFormat::format)
-      .let {
-        "$prefix$it"
-      }
+
+  override fun toCurrencyString(string: String, roundToDecimals: Boolean): Result<String, Throwable> = tryCatching {
+
+    numberFormat.maximumFractionDigits = if(roundToDecimals) decimalPlaces else 10
+    numberFormat
+      .format(string.toBigDecimal())
+      .let { "$prefix$it" }
   }
 
-  override fun parse(string: String): Result<BigDecimal, Throwable> = tryCatching {
-    string.filter {
-      it.isDigit() || it == decimalSeparator
-    }
-      .let(numberFormat::parse)!!
-      .toString()
+  override fun parseTypedInput(string: String): Result<String, Throwable> = tryCatching {
+    string
+      .removePrefix(prefix)
+      .filter { it.isDigit() }
+      .ifBlank { "0" }
       .toBigDecimal()
+      .setScale(decimalPlaces)
+      .divide(BigDecimal.TEN.pow(decimalPlaces))
+      .toPlainString()
   }
-
-
 }

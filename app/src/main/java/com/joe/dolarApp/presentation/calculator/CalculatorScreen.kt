@@ -56,7 +56,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +63,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -76,7 +76,6 @@ import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.presentation.calculator.CalculatorUiState.ConversionUiState
 import com.joe.dolarApp.presentation.common.CalculatorTopBar
 import com.joe.dolarApp.util.LoadState
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -197,35 +196,70 @@ fun Conversion(
 
     val textAreaModifier = Modifier.fillMaxWidth()
 
-    Text(
-      text = state.conversionRateString,
-    )
-    Text(
-      text = stringResource(R.string.rates_accurate_at, state.timestamp),
-    )
-
-    TextArea(
-      modifier = textAreaModifier,
-      currencyInputUiState = state.from,
-      onEvent = onEvent
-    )
-
-    Button(
-      modifier = Modifier.align(Alignment.CenterHorizontally),
-      onClick = { onEvent(CalculatorUiEvent.OnSwapDirectionPress) },
-      content = {
-        Icon(
-          painter = painterResource(R.drawable.baseline_arrow_downward_24),
-          contentDescription = stringResource(R.string.btn_currency_swap)
-        )
+    ListItem(
+      modifier = Modifier.clickable{
+        onEvent(CalculatorUiEvent.OnRefreshPress)
       },
+      headlineContent = { Text(text = state.exchangeRateString) },
+      supportingContent = { Text (stringResource(R.string.rates_accurate_at, state.timestamp) ) },
+      trailingContent = {  Icon(
+        painter = painterResource(R.drawable.outline_refresh_24),
+        contentDescription = stringResource(R.string.btn_action_refresh)
+      ) }
     )
 
-    TextArea(
-      modifier = textAreaModifier,
-      currencyInputUiState = state.to,
-      onEvent = onEvent
-    )
+
+    @Composable
+    fun domestic() {
+      TextArea(
+        value = state.domestic,
+        onValueChange = { onEvent(CalculatorUiEvent.OnDomesticTextUpdated(it)) },
+        modifier = textAreaModifier,
+        currencyCode = state.exchangeRate.domestic,
+        onEvent = onEvent,
+        isError = state.inputError,
+      )
+    }
+
+    @Composable
+    fun foreign() {
+      TextArea(
+        value = state.foreign,
+        onValueChange = { onEvent(CalculatorUiEvent.OnForeignTextUpdated(it)) },
+        modifier = textAreaModifier,
+        currencyCode = state.exchangeRate.foreign,
+        onEvent = onEvent,
+        showCountryPicker = true,
+        isError = state.inputError,
+      )
+    }
+
+    @Composable
+    fun swapButton() {
+      Button(
+        modifier = Modifier.align(Alignment.CenterHorizontally),
+        onClick = { onEvent(CalculatorUiEvent.OnSwapDirectionPress) },
+        content = {
+          Icon(
+            painter = painterResource(R.drawable.baseline_arrow_downward_24),
+            contentDescription = stringResource(R.string.btn_currency_swap)
+          )
+        },
+      )
+    }
+    when (state.mode) {
+      CalculatorUiState.ConversionMode.ASK -> {
+        foreign()
+        swapButton()
+        domestic()
+      }
+
+      CalculatorUiState.ConversionMode.BID -> {
+        domestic()
+        swapButton()
+        foreign()
+      }
+    }
 
     AnimatedVisibility(isRefreshing) {
       LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -235,27 +269,39 @@ fun Conversion(
 
 @Composable
 fun TextArea(
-  currencyInputUiState: CalculatorUiState.CurrencyInputUiState,
+  value: TextFieldValue,
+  onValueChange: (TextFieldValue) -> Unit,
+  currencyCode: CurrencyCode,
   onEvent: (CalculatorUiEvent) -> Unit,
   modifier: Modifier = Modifier,
+  showCountryPicker: Boolean = false,
+  isError: Boolean,
 ) {
-  val coroutineScope = rememberCoroutineScope()
   TextField(
-    isError = currencyInputUiState.error,
     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-    leadingIcon = { TextAreaLeading(currencyInputUiState, onEvent) },
+    leadingIcon = {
+      TextAreaLeading(
+        currencyCode = currencyCode,
+        showCountryPicker = showCountryPicker,
+        onEvent = onEvent,
+      )
+    },
     modifier = modifier,
     textStyle = LocalTextStyle.current.copy(
       textAlign = TextAlign.End,
     ),
-    onValueChange = { value -> coroutineScope.launch { currencyInputUiState.onTextChanged(value) } },
-    value = currencyInputUiState.display,
+    isError = isError,
+    onValueChange = {
+      onValueChange(it)
+    },
+    value = value
   )
 }
 
 @Composable
 private fun TextAreaLeading(
-  currencyInputUiState: CalculatorUiState.CurrencyInputUiState,
+  currencyCode: CurrencyCode,
+  showCountryPicker: Boolean,
   onEvent: (CalculatorUiEvent) -> Unit,
   modifier: Modifier = Modifier,
 ) {
@@ -265,7 +311,7 @@ private fun TextAreaLeading(
     modifier = modifier
       .clip(RoundedCornerShape(4.dp))
       .clickable(
-        enabled = currencyInputUiState.showCountryPicker,
+        enabled = showCountryPicker,
         onClickLabel = stringResource(R.string.btn_choose_currency)
       ) {
         onEvent(CalculatorUiEvent.OnShowCurrencySelectionPress)
@@ -274,12 +320,12 @@ private fun TextAreaLeading(
     Spacer(Modifier.size(4.dp))
 
     CountryFlag(
-      currencyInputUiState.currency,
+      currency = currencyCode,
       modifier = modifier,
     )
-    Text(currencyInputUiState.currency.value)
+    Text(currencyCode.value)
 
-    AnimatedVisibility(currencyInputUiState.showCountryPicker) {
+    AnimatedVisibility(showCountryPicker) {
       Icon(
         painter = painterResource(R.drawable.outline_arrow_drop_down_24),
         contentDescription = null // decorative
@@ -363,7 +409,7 @@ private fun ErrorContent(
 
     if (error.canRetry) {
       Button(
-        onClick = { onEvent(CalculatorUiEvent.OnRetryPress) },
+        onClick = { onEvent(CalculatorUiEvent.OnRefreshPress) },
         content = { Text(stringResource(R.string.btn_action_retry)) },
       )
     }

@@ -1,6 +1,8 @@
 package com.joe.dolarApp.presentation.calculator
 
+import androidx.compose.ui.text.input.TextFieldValue
 import com.joe.dolarApp.domain.CurrencyCode
+import com.joe.dolarApp.domain.ExchangeRate
 
 /**
  * UiState for the calculator screen.
@@ -12,19 +14,21 @@ data class CalculatorUiState(
   val isRefreshing: Boolean,
 ) {
 
-  data class ConversionUiState(
-    val conversionRateString: String,
-    val timestamp: String,
-    val from: CurrencyInputUiState,
-    val to: CurrencyInputUiState,
-  )
+  enum class ConversionMode{
+    /** Selling foreign **/
+    ASK,
+    /** Buying foreign **/
+    BID
+  }
 
-  data class CurrencyInputUiState(
-    val currency: CurrencyCode,
-    val display: String,
-    val error: Boolean,
-    val showCountryPicker: Boolean,
-    val onTextChanged: suspend (String) -> Unit,
+  data class ConversionUiState(
+    val exchangeRateString: String,
+    val mode: ConversionMode,
+    val exchangeRate: ExchangeRate,
+    val domestic: TextFieldValue,
+    val foreign: TextFieldValue,
+    val inputError: Boolean,
+    val timestamp: String,
   )
 
   data class ErrorUiState(
@@ -38,7 +42,11 @@ sealed interface CalculatorUiEvent {
   object OnShowCurrencySelectionPress : CalculatorUiEvent
   object OnHideCurrencySelectionPress : CalculatorUiEvent
   object OnSwapDirectionPress : CalculatorUiEvent
-  object OnRetryPress : CalculatorUiEvent
+  object OnRefreshPress : CalculatorUiEvent
+
   data class OnCurrencySelected(val currencyCode: CurrencyCode) : CalculatorUiEvent
   data class OnBottomSheetVisibilityChanged(val isVisible: Boolean) : CalculatorUiEvent
+
+  data class OnDomesticTextUpdated(val text: TextFieldValue) : CalculatorUiEvent
+  data class OnForeignTextUpdated(val text: TextFieldValue) : CalculatorUiEvent
 }
