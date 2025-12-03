@@ -4,6 +4,7 @@ import com.joe.dolarApp.util.DispatcherProvider
 import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.coTryCatching
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.math.BigDecimal
 import java.math.MathContext
 import javax.inject.Inject

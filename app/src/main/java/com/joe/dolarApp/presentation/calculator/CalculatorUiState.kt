@@ -21,16 +21,12 @@ data class CalculatorUiState(
   }
 
   data class ConversionUiState(
+    val exchangeRateString: String,
     val mode: ConversionMode,
     val exchangeRate: ExchangeRate,
-    val domestic: TextState,
-    val foreign: TextState,
+    val domestic: String,
+    val foreign: String,
     val inputError: Boolean,
-  )
-
-  data class TextState(
-    val value: String,
-    val format: (String) -> String,
   )
 
   data class ErrorUiState(

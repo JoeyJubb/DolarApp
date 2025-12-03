@@ -13,7 +13,6 @@ import com.joe.dolarApp.util.LoadState.Success
 import com.joe.dolarApp.util.WhileUiSubscribed
 import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.asLoadState
-import com.joe.dolarApp.util.errorHandling.map
 import com.joe.dolarApp.util.errorHandling.mapError
 import com.joe.dolarApp.util.errorHandling.onSuccess
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -62,13 +61,8 @@ class CalculatorViewModel @Inject constructor(
   private val exchangeRateLoadState =
     MutableStateFlow<LoadState<ExchangeRate, ErrorUiState>>(Loading)
 
-  private val conversionState: Flow<Result<CalculatorUiState.ConversionUiState, ErrorUiState>> =
+  private val conversionState: Flow<CalculatorUiState.ConversionUiState> =
     delegate.observe()
-      .map {
-        it.mapError {
-          errorStateProvider.createGenericError()
-        }
-      }
 
   override val uiState: StateFlow<LoadState<CalculatorUiState, ErrorUiState>> = combine(
     conversionState.startWithNull(),
@@ -82,19 +76,15 @@ class CalculatorViewModel @Inject constructor(
       is Result.Success -> when (exchangeRateLoadState) {
         is Failure -> Failure(exchangeRateLoadState.error)
         else -> when (conversionState) {
-          is Result.Failure -> Failure(conversionState.error)
-          is Result.Success -> {
-            Success(
-              CalculatorUiState(
-                conversion = conversionState.value,
-                currencySelection = currencyList.value,
-                isCurrencySelectionVisible = showCurrencyList,
-                isRefreshing = exchangeRateLoadState is Loading,
-              )
-            )
-          }
-
           null -> Loading
+          else -> Success(
+            CalculatorUiState(
+              conversion = conversionState,
+              currencySelection = currencyList.value,
+              isCurrencySelectionVisible = showCurrencyList,
+              isRefreshing = exchangeRateLoadState is Loading,
+            )
+          )
         }
       }
 

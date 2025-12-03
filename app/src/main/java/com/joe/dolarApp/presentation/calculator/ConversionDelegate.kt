@@ -1,11 +1,11 @@
 package com.joe.dolarApp.presentation.calculator
 
+import com.joe.dolarApp.R
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.domain.CurrencyExchanger
 import com.joe.dolarApp.domain.ExchangeRate
 import com.joe.dolarApp.presentation.calculator.CalculatorUiState.ConversionMode
-import com.joe.dolarApp.util.errorHandling.Result
-import com.joe.dolarApp.util.errorHandling.asSuccess
+import com.joe.dolarApp.presentation.common.ResourceProvider
 import com.joe.dolarApp.util.errorHandling.flatMap
 import com.joe.dolarApp.util.errorHandling.getOrDefault
 import com.joe.dolarApp.util.errorHandling.onFailure
@@ -18,7 +18,7 @@ import javax.inject.Inject
 
 interface ConversionDelegate {
 
-  fun observe(): Flow<Result<CalculatorUiState.ConversionUiState, Unit>>
+  fun observe(): Flow<CalculatorUiState.ConversionUiState>
 
   /**
    * swap between BID and ASK
@@ -35,42 +35,52 @@ interface ConversionDelegate {
 class ConversionDelegateImpl @Inject constructor(
   private val currencyExchanger: CurrencyExchanger,
   private val formatProvider: CurrencyFormatterProvider,
+  private val resourceProvider: ResourceProvider,
 ) : ConversionDelegate {
 
   private data class TextHolder(
-    val domestic: String,
-    val foreign: String,
+    val domestic: String = "0",
+    val foreign: String = "0",
   )
 
   private val mode = MutableStateFlow(ConversionMode.BID)
   private val exchangeRate = MutableStateFlow<ExchangeRate?>(null)
   private val exchangeError = MutableStateFlow(false)
-  private val text = MutableStateFlow<TextHolder?>(null)
+  private val text = MutableStateFlow<TextHolder>(TextHolder())
 
-  override fun observe(): Flow<Result<CalculatorUiState.ConversionUiState, Unit>> = combine(
+  override fun observe(): Flow<CalculatorUiState.ConversionUiState> = combine(
     mode,
     exchangeRate.filterNotNull(),
     exchangeError,
-    text.filterNotNull(),
-  ){ mode, exchangeRate, exchangeError, text ->
-
+    text,
+  ) { mode, exchangeRate, exchangeError, text ->
     CalculatorUiState.ConversionUiState(
       mode = mode,
       exchangeRate = exchangeRate,
-      domestic = CalculatorUiState.TextState(
-        value = text.domestic,
-        format = { formatProvider.format(it, exchangeRate.domestic )},
-      ),
-      foreign = CalculatorUiState.TextState(
-        value = text.foreign,
-        format = { formatProvider.format(it, exchangeRate.foreign )},
-      ),
+      domestic = format(text.domestic, exchangeRate.domestic),
+      foreign = format(text.foreign, exchangeRate.foreign),
       inputError = exchangeError,
-    ).asSuccess()
+      exchangeRateString = resourceProvider.getString(
+        R.string.conversion_string,
+        format("1", exchangeRate.domestic, false),
+        format(getCurrentRate(), exchangeRate.foreign, false),
+      )
+    )
   }
 
-  private fun CurrencyFormatterProvider.format(string: String, currencyCode: CurrencyCode): String =
-    get(currencyCode).flatMap { it.format(string) }.getOrDefault(string)
+  private fun format(
+    string: String,
+    currencyCode: CurrencyCode,
+    roundToDecimals: Boolean = true,
+  ): String =
+    formatProvider[currencyCode]
+      .flatMap { it.toCurrencyString(string, roundToDecimals) }
+      .getOrDefault(string)
+
+  private fun parseTypedInput(string: String, code: CurrencyCode): String =
+    formatProvider[code]
+      .flatMap { it.parseTypedInput(string) }
+      .getOrDefault(string)
 
   override suspend fun flip() = mode.update {
     when (it) {
@@ -83,33 +93,44 @@ class ConversionDelegateImpl @Inject constructor(
     this.exchangeRate.update {
       exchangeRate
     }
-    this.text.update { prev ->
-      prev ?: TextHolder(
-        domestic = "1",
-        foreign = exchangeRate.rate
-      )
+  }
+
+  override suspend fun onDomesticUpdated(text: String) {
+    exchangeRate.value?.let { exchangeRate ->
+      this.text.update {
+        val parsed = parseTypedInput(text, exchangeRate.domestic)
+        TextHolder(
+          domestic = parsed,
+          foreign = calculateOther(
+            text = parsed,
+            invert = mode.value == ConversionMode.ASK
+          )
+        )
+      }
     }
   }
 
-  override suspend fun onDomesticUpdated(text: String) = this.text.update {
-    TextHolder(
-      domestic = text,
-      foreign = calculateOther(text = text, invert = mode.value == ConversionMode.ASK)
-    )
-  }
-
-  override suspend fun onForeignUpdated(text: String) = this.text.update {
-    TextHolder(
-      domestic = calculateOther(text = text, invert = mode.value == ConversionMode.BID),
-      foreign = text
-    )
-  }
-
-  private val ExchangeRate.rate : String get() =
-    when (mode.value) {
-      ConversionMode.ASK -> ask
-      ConversionMode.BID -> bid
+  override suspend fun onForeignUpdated(text: String) {
+    exchangeRate.value?.let { exchangeRate ->
+      this.text.update {
+        val parsed = parseTypedInput(text, exchangeRate.foreign)
+        TextHolder(
+          foreign = parsed,
+          domestic = calculateOther(
+            text = parsed,
+            invert = mode.value == ConversionMode.BID
+          )
+        )
+      }
     }
+  }
+
+  private val ExchangeRate.rate: String
+    get() =
+      when (mode.value) {
+        ConversionMode.ASK -> ask
+        ConversionMode.BID -> bid
+      }
 
   private fun getCurrentRate(): String = exchangeRate.value?.rate ?: "1"
 
@@ -124,7 +145,8 @@ class ConversionDelegateImpl @Inject constructor(
       invertRate = invert
     ).onFailure {
       exchangeError.update { true }
-    }.getOrDefault("0")
+    }
+      .getOrDefault("")
   }
 
 

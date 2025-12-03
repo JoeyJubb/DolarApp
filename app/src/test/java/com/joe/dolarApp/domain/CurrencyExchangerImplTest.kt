@@ -32,7 +32,6 @@ class CurrencyExchangerImplTest {
     val result = sut.doExchange(
       value = testCase.givenInput,
       rate = testCase.givenExchangeRate,
-      from = CurrencyCode("FROM"),
       invertRate = testCase.givenInvertedRate,
     )
 
@@ -48,7 +47,6 @@ class CurrencyExchangerImplTest {
     val result = sut.doExchange(
       value = testCase.givenInput,
       rate = "1",
-      from = CurrencyCode("FROM"),
       invertRate = false,
     )
 
@@ -104,6 +102,11 @@ class CurrencyExchangerImplTest {
       expect = "33.33333333333333",
       givenInvertedRate = true,
     ),
+    FRACTIONS(
+      givenInput = "0.01",
+      givenExchangeRate = "18.29383",
+      expect = "0.1829383"
+    )
   }
 
 
