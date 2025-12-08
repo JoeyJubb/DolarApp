@@ -118,7 +118,7 @@ private fun CalculatorContent(
 
   Box(
     modifier = modifier,
-  ){
+  ) {
 
     Conversion(
       state = uiState.conversion,
@@ -126,7 +126,7 @@ private fun CalculatorContent(
       onEvent = onEvent,
     )
 
-    if(uiState.isCurrencySelectionVisible) {
+    if (uiState.isCurrencySelectionVisible) {
       ModalBottomSheet(
         onDismissRequest = { onEvent(CalculatorUiEvent.OnHideCurrencySelectionPress) },
         content = {
@@ -327,7 +327,7 @@ private fun CurrencyList(
         leadingContent = { CountryFlag(currencyCode) }
       )
     }
-    item {  }
+    item { }
   }
 }
 

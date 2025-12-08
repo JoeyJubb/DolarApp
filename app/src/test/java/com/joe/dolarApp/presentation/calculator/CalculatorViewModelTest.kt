@@ -6,7 +6,6 @@ import com.joe.dolarApp.domain.ConversionRepository
 import com.joe.dolarApp.domain.CurrencyCode
 import com.joe.dolarApp.domain.ExchangeRate
 import com.joe.dolarApp.isLoaded
-import com.joe.dolarApp.isLoading
 import com.joe.dolarApp.presentation.calculator.CalculatorUiState.ConversionUiState
 import com.joe.dolarApp.util.errorHandling.asSuccess
 import io.mockk.coEvery
@@ -98,5 +97,4 @@ class CalculatorViewModelTest {
     private const val DOMESTIC = "USDC"
     private const val FOREIGN = "FOREIGN"
   }
-
 }

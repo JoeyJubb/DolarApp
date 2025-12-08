@@ -40,14 +40,13 @@ data class CalculatorUiState(
 
 sealed interface CalculatorUiEvent {
 
-  object OnShowCurrencySelectionPress : CalculatorUiEvent
-  object OnHideCurrencySelectionPress : CalculatorUiEvent
-  object OnSwapDirectionPress : CalculatorUiEvent
-  object OnRefreshPress : CalculatorUiEvent
+  data object OnRefreshPress : CalculatorUiEvent
 
+  data object OnShowCurrencySelectionPress : CalculatorUiEvent
+  data object OnHideCurrencySelectionPress : CalculatorUiEvent
   data class OnCurrencySelected(val currencyCode: CurrencyCode) : CalculatorUiEvent
-  data class OnBottomSheetVisibilityChanged(val isVisible: Boolean) : CalculatorUiEvent
 
+  data object OnSwapDirectionPress : CalculatorUiEvent
   data class OnDomesticTextUpdated(val text: TextFieldValue) : CalculatorUiEvent
   data class OnForeignTextUpdated(val text: TextFieldValue) : CalculatorUiEvent
 }

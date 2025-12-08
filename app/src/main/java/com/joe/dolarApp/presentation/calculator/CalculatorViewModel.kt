@@ -94,7 +94,7 @@ class CalculatorViewModel @Inject constructor(
   )
 
   private suspend fun onCurrencySelected(foreign: CurrencyCode) {
-    showCurrencySelection.update { false }
+    showCurrencySelector(false)
     exchangeRate.update { Loading }
     exchangeRate.update {
       repo
@@ -110,21 +110,26 @@ class CalculatorViewModel @Inject constructor(
   }
 
   override suspend fun handleEvent(event: CalculatorUiEvent) = when (event) {
-    CalculatorUiEvent.OnHideCurrencySelectionPress -> showCurrencySelection.update { false }
-    CalculatorUiEvent.OnRefreshPress -> retry()
-    CalculatorUiEvent.OnShowCurrencySelectionPress -> showCurrencySelection.update { true }
-    CalculatorUiEvent.OnSwapDirectionPress -> delegate.flip()
+    is CalculatorUiEvent.OnRefreshPress -> onRefreshPress()
+
     is CalculatorUiEvent.OnCurrencySelected -> onCurrencySelected(event.currencyCode)
-    is CalculatorUiEvent.OnBottomSheetVisibilityChanged -> showCurrencySelection.update { event.isVisible }
+    is CalculatorUiEvent.OnHideCurrencySelectionPress -> showCurrencySelector(false)
+    is CalculatorUiEvent.OnShowCurrencySelectionPress -> showCurrencySelector(true)
+
     is CalculatorUiEvent.OnDomesticTextUpdated -> delegate.onDomesticUpdated(event.text)
     is CalculatorUiEvent.OnForeignTextUpdated -> delegate.onForeignUpdated(event.text)
+    is CalculatorUiEvent.OnSwapDirectionPress -> delegate.flip()
   }
 
-  private fun retry() = isDataInvalid.update { true }
+  private fun onRefreshPress() {
+    isDataInvalid.update { true }
+  }
+
+  private fun showCurrencySelector(show: Boolean) {
+    showCurrencySelection.update { show }
+  }
 
 
   private fun <T> Flow<T>.startWithNull(): Flow<T?> =
     this.map { it as T? }.onStart { emit(null) }
-
-
 }
