@@ -126,9 +126,7 @@ private fun CalculatorContent(
       onEvent = onEvent,
     )
 
-    AnimatedVisibility(
-      uiState.isCurrencySelectionVisible
-    ) {
+    if(uiState.isCurrencySelectionVisible) {
       ModalBottomSheet(
         onDismissRequest = { onEvent(CalculatorUiEvent.OnHideCurrencySelectionPress) },
         content = {
