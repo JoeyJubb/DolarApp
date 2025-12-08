@@ -26,6 +26,7 @@ strikt = "0.34.0"
 testParameterInjector = "1.20"
 coil = "3.3.0"
 retrofit = "3.0.0"
+turbine = "1.2.1"
 
 [libraries]
 accompanist-appcompat-theme = { group = "com.google.accompanist", name = "accompanist-appcompat-theme", version.ref = "accompanist" }
@@ -77,6 +78,8 @@ coil-network = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", versi
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil"}
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit"}
 retrofit-gson = { group = "com.squareup.retrofit2", name ="converter-gson", version.ref = "retrofit"}
+turbine = { group="app.cash.turbine", name = "turbine", version.ref = "turbine"}
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
