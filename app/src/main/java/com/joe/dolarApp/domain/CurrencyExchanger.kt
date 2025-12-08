@@ -1,5 +1,6 @@
 package com.joe.dolarApp.domain
 
+import com.joe.dolarApp.domain.CurrencyExchanger.Companion.PRECISION
 import com.joe.dolarApp.util.DispatcherProvider
 import com.joe.dolarApp.util.errorHandling.Result
 import com.joe.dolarApp.util.errorHandling.coTryCatching
@@ -8,6 +9,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.math.BigDecimal
 import java.math.MathContext
+import java.math.RoundingMode
 import javax.inject.Inject
 
 interface CurrencyExchanger {
@@ -25,13 +27,15 @@ interface CurrencyExchanger {
     /**
      * The maximum number of currency digits to display to the user.
      */
-    const val PRECISION = 500
+    const val PRECISION = 64
   }
 }
 
 class CurrencyExchangerImpl @Inject constructor(
   private val dispatcherProvider: DispatcherProvider,
 ) : CurrencyExchanger {
+
+  private val mathContext = MathContext(PRECISION, RoundingMode.HALF_EVEN)
 
   override suspend fun doExchange(
     value: String,
@@ -42,7 +46,7 @@ class CurrencyExchangerImpl @Inject constructor(
       .parse()
       .let {
         val multiplicand = rate.toBigDecimal()
-        if (invertRate) it.divide(multiplicand, MathContext.DECIMAL128)
+        if (invertRate) it.divide(multiplicand, mathContext)
         else it.multiply(multiplicand)
       }
       .toPlainString()

@@ -99,7 +99,7 @@ class CurrencyExchangerImplTest {
     INVERTED_REQUIRES_ROUNDING(
       givenInput = "100.00",
       givenExchangeRate = "3",
-      expect = "33.33333333333333",
+      expect = "33.33333333333333333333333333333333333333333333333333333333333333",
       givenInvertedRate = true,
     ),
     FRACTIONS(

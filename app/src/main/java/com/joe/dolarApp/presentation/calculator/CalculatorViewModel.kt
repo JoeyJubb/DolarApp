@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import timber.log.Timber
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
@@ -52,28 +51,21 @@ class CalculatorViewModel @Inject constructor(
     isDataInvalid
       .filter { it }
       .map {
-        Timber.d("refreshing!")
         repo.getAvailableForeignCodes(domesticCurrency)
-          .mapError {
-            errorStateProvider.createErrorState(
-              networkError = it
-            )
-          }
+          .mapError(errorStateProvider::createErrorState)
           .onSuccess { onCurrencySelected(it.first()) }
+          .also { isDataInvalid.update { false } }
       }
 
-  private val exchangeRateLoadState =
+  private val exchangeRate =
     MutableStateFlow<LoadState<ExchangeRate, ErrorUiState>>(Loading)
-
-  private val conversionState: Flow<CalculatorUiState.ConversionUiState> =
-    delegate.observe()
 
   override val uiState: StateFlow<LoadState<CalculatorUiState, ErrorUiState>> = combine(
     isDataInvalid,
-    conversionState.startWithNull(),
+    delegate.observe().startWithNull(),
     foreignCurrencies.startWithNull(),
     showCurrencySelection,
-    exchangeRateLoadState,
+    exchangeRate,
   ) { isDataInvalid, conversionState, currencyList, showCurrencyList, exchangeRateLoadState ->
 
     return@combine when (currencyList) {
@@ -103,22 +95,18 @@ class CalculatorViewModel @Inject constructor(
 
   private suspend fun onCurrencySelected(foreign: CurrencyCode) {
     showCurrencySelection.update { false }
-    exchangeRateLoadState.update { Loading }
-    repo
-      .getExchangeRate(
-        domestic = domesticCurrency,
-        foreign = foreign,
-        forceRefresh = !isFirstLoad.getAndSet(false)
-      )
-      .onSuccess {
-        delegate.setExchangeRate(it)
-      }
-      .mapError { errorStateProvider.createErrorState(it) }
-      .let { result ->
-        exchangeRateLoadState.update { result.asLoadState() }
-      }
-    isDataInvalid.update { false }
-
+    exchangeRate.update { Loading }
+    exchangeRate.update {
+      repo
+        .getExchangeRate(
+          domestic = domesticCurrency,
+          foreign = foreign,
+          forceRefresh = !isFirstLoad.getAndSet(false)
+        )
+        .onSuccess { delegate.setExchangeRate(it) }
+        .mapError(errorStateProvider::createErrorState)
+        .asLoadState()
+    }
   }
 
   override suspend fun handleEvent(event: CalculatorUiEvent) = when (event) {
